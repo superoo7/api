@@ -1,0 +1,19 @@
+default: &default
+  host: localhost
+  adapter: postgresql
+  encoding: utf8
+  pool: 5
+  timeout: 10000
+  database: steemhunt
+  username: steemhunt
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default
+  password: <%= ENV["DB_PASSWORD"] %>
+  pool: 50

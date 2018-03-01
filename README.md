@@ -1,4 +1,19 @@
-# api
-Steemhunt back-end client
+# Steemhunt Back-end
 
-### Back-end code is currently in a private repo and will be made public after the official release.
+## Stacks
+- Ruby 2.4
+- Rails 5
+- Nginx / Puma
+- PostgreSQL
+
+## Development settings
+
+### Add DB user
+```
+PG_UNAME=steemhunt
+psql -d postgres -c "CREATE USER $PG_UNAME;"
+psql -d postgres -c "ALTER USER $PG_UNAME CREATEDB;"
+psql -d postgres -c "ALTER USER $PG_UNAME WITH SUPERUSER;"
+
+rails db:drop db:create db:migrate
+```
