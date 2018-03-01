@@ -8,12 +8,12 @@
 
 ## Development settings
 
-### Add DB user
+### DB Preparation
 ```
 PG_UNAME=steemhunt
 psql -d postgres -c "CREATE USER $PG_UNAME;"
 psql -d postgres -c "ALTER USER $PG_UNAME CREATEDB;"
 psql -d postgres -c "ALTER USER $PG_UNAME WITH SUPERUSER;"
 
-rails db:drop db:create db:migrate
+rails db:drop db:create db:migrate db:seed
 ```
