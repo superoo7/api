@@ -6,7 +6,7 @@
 - Nginx / Puma
 - PostgreSQL
 
-## Development settings
+## Development setup
 
 ### DB Preparation
 ```
@@ -16,4 +16,13 @@ psql -d postgres -c "ALTER USER $PG_UNAME CREATEDB;"
 psql -d postgres -c "ALTER USER $PG_UNAME WITH SUPERUSER;"
 
 rails db:drop db:create db:migrate db:seed
+```
+
+### Install
+```
+brew install rbenv
+brew install ruby-build
+rbenv install 2.4.2
+gem install bundler
+bundle install
 ```
