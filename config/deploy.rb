@@ -2,7 +2,7 @@
 lock "~> 3.10.1"
 
 set :application, "steemhunt"
-set :repo_url, "git@bitbucket.org:sydneyitguy/steemhunt-api.git"
+set :repo_url, "git@github.com:Steemhunt/api.git"
 
 current_branch = `git branch`.match(/\* (\S+)\s/m)[1]
 set :branch, ENV['branch'] || current_branch || "master"
