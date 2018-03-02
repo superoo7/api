@@ -4,10 +4,12 @@ class PostsController < ApplicationController
   # GET /posts
   def index
     days_ago = params[:days_ago].to_i
+    today = Time.zone.today.to_time
+
     @posts = if days_ago > 0
-      Post.where('created_at >= ? AND created_at < ?', Date.today - days_ago.days, Date.today - (days_ago - 1).days)
+      Post.where('created_at >= ? AND created_at < ?', today - days_ago.days, today - (days_ago - 1).days)
     else
-      Post.where('created_at >= ?', Date.today)
+      Post.where('created_at >= ?', today)
     end.where(is_active: true).order('payout_value DESC')
     # NOTE: DB indices on `is_active`, `payout_value` are omitted as intended as the number of records on daily posts is small
 
