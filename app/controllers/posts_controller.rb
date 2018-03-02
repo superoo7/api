@@ -65,7 +65,7 @@ class PostsController < ApplicationController
     end
 
     def post_params
-      params.require(:post).permit(:author, :url, :title, :tagline, :permlink, :is_active, tags: [],
+      params.require(:post).permit(:author, :url, :title, :tagline, :description, :permlink, :is_active, tags: [],
         beneficiaries: [ :account, :weight ],
         images: [ :id, :name, :link, :width, :height, :type, :deletehash ])
     end
