@@ -4,7 +4,7 @@ require 'json'
 class Post < ApplicationRecord
   validates_presence_of :author, :url, :title, :tagline
   validates_format_of :url, with: /\A(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,})(.*)\z/i
-  validates_format_of :permlink, with: /\A[\d\-a-z]+\z/i, allow_blank: true # digits, dashes, letters only (no underbar)
+  validates_format_of :permlink, with: /\A[\d\-a-z]+\z/i, allow_blank: false # digits, dashes, letters only (no underbar)
   validates_uniqueness_of :url
 
   def self.data_from_steem(author, permlink)
