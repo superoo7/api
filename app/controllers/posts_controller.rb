@@ -1,5 +1,7 @@
 class PostsController < ApplicationController
-  before_action :set_post, only: [:show, :update]
+  before_action :ensure_login!, only: [:create, :update, :destroy]
+  before_action :set_post, only: [:show, :update, :refresh, :destroy]
+  before_action :check_ownership!, only: [:update, :destroy]
 
   # GET /posts
   def index
@@ -45,13 +47,25 @@ class PostsController < ApplicationController
     end
   end
 
-  # TODO:
-  # Here we just assume users' data is always correct
-  # We need to double check them later and potentially need some blacklist controls for abusing users
-  # Because this can actually manipulate our sites' rankings
-  # PATCH /posts/@:author/:permlink
+  # PUT /posts/@:author/:permlink
   def update
-    if @post.update(post_update_params)
+    if @post.update(post_params)
+      render json: { result: 'OK' }
+    else
+      render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
+    end
+  end
+
+  # DELETE /posts/@:author/:permlink
+  def destroy
+    @post.destroy
+
+    render json: { head: :no_content }
+  end
+
+  # PATCH /posts/refresh/@:author/:permlink
+  def refresh
+    if @post.update(post_refresh_params)
       render json: { result: 'OK' }
     else
       render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
@@ -70,7 +84,7 @@ class PostsController < ApplicationController
         images: [ :id, :name, :link, :width, :height, :type, :deletehash ])
     end
 
-    def post_update_params
+    def post_refresh_params
       params.require(:post).permit(:payout_value, :children, active_votes: [ :voter, :weight, :rshares, :percent, :reputation, :time ])
     end
 
