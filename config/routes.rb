@@ -6,6 +6,7 @@ Rails.application.routes.draw do
       put '/@:author/:permlink', to: 'posts#update', constraints: { author: /[^\/]+/ }
       delete '/@:author/:permlink', to: 'posts#destroy', constraints: { author: /[^\/]+/ }
       patch 'refresh/@:author/:permlink', to: 'posts#refresh', constraints: { author: /[^\/]+/ }
+      patch 'hide/@:author/:permlink', to: 'posts#hide', constraints: { author: /[^\/]+/ }
     end
   end
 

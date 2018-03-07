@@ -1,7 +1,7 @@
 class PostsController < ApplicationController
-  before_action :ensure_login!, only: [:create, :update, :destroy]
-  before_action :set_post, only: [:show, :update, :refresh, :destroy]
-  before_action :check_ownership!, only: [:update, :destroy]
+  before_action :ensure_login!, only: [:create, :update, :hide, :destroy]
+  before_action :set_post, only: [:show, :update, :refresh, :hide, :destroy]
+  before_action :check_ownership!, only: [:update, :destroy, :hide]
 
   # GET /posts
   def index
@@ -66,6 +66,15 @@ class PostsController < ApplicationController
   # PATCH /posts/refresh/@:author/:permlink
   def refresh
     if @post.update(post_refresh_params)
+      render json: { result: 'OK' }
+    else
+      render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
+    end
+  end
+
+  # PUT /hide/@:author/:permlink
+  def hide
+    if @post.update(is_active: !params[:hide])
       render json: { result: 'OK' }
     else
       render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity

@@ -20,7 +20,7 @@ class ApplicationController < ActionController::API
     end
 
     def check_ownership!
-      unless @post.author == @current_user.username
+      if @post.author != @current_user.username && !@current_user.admin?
         render json: { error: 'FORBIDDEN' }, status: :forbidden
       end
     end
