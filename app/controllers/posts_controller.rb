@@ -25,11 +25,13 @@ class PostsController < ApplicationController
 
   # GET /posts/exists
   def exists
-    unless valid_web_url?(params[:url])
+    url = domain_and_path(params[:url])
+
+    if url.nil?
       render json: { result: 'INVALID' } and return
     end
 
-    if Post.exists?(url: similar_urls(params[:url]))
+    if Post.where('url LIKE ?', "%#{url}%").exists? # TODO: This may not use index
       render json: { result: 'ALREADY_EXISTS' }
     else
       render json: { result: 'OK' }
@@ -97,10 +99,12 @@ class PostsController < ApplicationController
       params.require(:post).permit(:payout_value, :children, active_votes: [ :voter, :weight, :rshares, :percent, :reputation, :time ])
     end
 
-    def valid_web_url?(uri)
-      uri = URI.parse(uri) and !uri.host.nil? and ['http', 'https'].include?(uri.scheme)
-    rescue URI::InvalidURIError
-      false
+    def domain_and_path(uri)
+      parsed = URI.parse(uri)
+
+      return nil if parsed.host.empty? || !['http', 'https'].include?(parsed.scheme)
+
+      "#{parsed.host}#{parsed.path == '/' ? '' : parsed.path}"
     end
 
     # Returns canonical urls of given url
