@@ -1,3 +1,6 @@
+# psql -d postgres -c "CREATE USER updatebot"
+# psql -d postgres -c "ALTER USER updatebot WITH SUPERUSER;"
+
 desc 'Dump database and Redis'
 task :dump => :environment do |t, args|
   month_ago_backup = 1.month.ago.strftime('%Y-%m')

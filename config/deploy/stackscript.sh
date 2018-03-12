@@ -57,6 +57,10 @@ psql -d postgres -c "DROP DATABASE $PG_DBNAME;"
 psql -d postgres -c "ALTER USER $PG_UNAME CREATEDB;"
 psql -d postgres -c "ALTER USER $PG_UNAME WITH SUPERUSER;"
 
+# Enable updatebot to run psql
+psql -d postgres -c "CREATE USER updatebot"
+psql -d postgres -c "ALTER USER updatebot WITH SUPERUSER;"
+
 # TO avaoid LC_CTYPE setting requires encoding "LATIN1" error
 psql
 update pg_database set datistemplate=false where datname='template1';
