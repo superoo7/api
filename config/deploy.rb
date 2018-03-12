@@ -56,7 +56,7 @@ namespace :dotenv do
   task :upload do
     on roles :web do
       stage = fetch(:rails_env) || fetch(:stage)
-      # upload! ".env", "#{shared_path}/.env"
+      upload! ".env", "#{shared_path}/.env"
       upload! ".env.#{stage}", "#{shared_path}/.env.#{stage}"
     end
   end
