@@ -1,5 +1,3 @@
-require 'nv_log'
-
 desc 'Dump database and Redis'
 task :dump => :environment do |t, args|
   month_ago_backup = 1.month.ago.strftime('%Y-%m')
