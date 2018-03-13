@@ -102,7 +102,7 @@ class PostsController < ApplicationController
     def search_url(uri)
       parsed = URI.parse(uri)
 
-      return nil if parsed.host.empty? || !['http', 'https'].include?(parsed.scheme)
+      return nil if parsed.host.blank? || !['http', 'https'].include?(parsed.scheme)
 
       host = parsed.host.gsub('www.', '')
       path = parsed.path == '/' ? '' : parsed.path
