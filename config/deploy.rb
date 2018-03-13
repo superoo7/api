@@ -65,7 +65,7 @@ namespace :dotenv do
   task :symlink do
     on roles :web do
       stage = fetch(:rails_env) || fetch(:stage)
-      # execute :ln, "-nfs #{shared_path}/.env #{release_path}/.env"
+      execute :ln, "-nfs #{shared_path}/.env #{release_path}/.env"
       execute :ln, "-nfs #{shared_path}/.env.#{stage} #{release_path}/.env.#{stage}"
     end
   end
