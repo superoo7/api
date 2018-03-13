@@ -47,7 +47,8 @@ task :daily_post => :environment do |t, args|
     "<center><br/>![Steemhunt.com](https://steemitimages.com/DQmVTsk8LrQXcDekbqJTFLCYoP1atnfac1T4X4veVHBhkWJ/image.png)<br/>\n" +
     "## Steemhunt\n" +
     "A place where you can dig products and earn STEEM.\n" +
-    "[Steemhunt.com](https://steemhunt.com)\n" +
+    "[Steemhunt.com](https://steemhunt.com)\n\n" +
+    "*Join our [Telegram Channel](https://t.me/joinchat/AzcqGxCV1FZ8lJHVgHOgGQ) for feedbacks & questions.*\n" +
     "</center>"
 
   tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
