@@ -48,7 +48,7 @@ task :daily_post => :environment do |t, args|
     "## Steemhunt\n" +
     "A place where you can dig products and earn STEEM.\n" +
     "[Steemhunt.com](https://steemhunt.com)\n\n" +
-    "*Join our [Telegram Channel](https://t.me/joinchat/AzcqGxCV1FZ8lJHVgHOgGQ) for feedbacks & questions.*\n" +
+    "*Join our [Telegram](https://t.me/joinchat/AzcqGxCV1FZ8lJHVgHOgGQ) or [Discord](https://discord.gg/mWXpgks) channel for feedbacks & questions.*\n" +
     "</center>"
 
   tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
