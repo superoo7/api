@@ -25,13 +25,13 @@ class PostsController < ApplicationController
 
   # GET /posts/exists
   def exists
-    url = search_url(params[:url])
+    result = exists?(params[:url])
 
-    if url.nil?
+    if result == 'INVALID'
       render json: { result: 'INVALID' } and return
     end
 
-    if Post.where('url LIKE ?', url).exists? # NOTE: Check index scan
+    if result
       render json: { result: 'ALREADY_EXISTS' }
     else
       render json: { result: 'OK' }
@@ -41,6 +41,10 @@ class PostsController < ApplicationController
   # POST /posts
   def create
     @post = Post.new(post_params)
+
+    if exists?(@post.url) # if 'INVALID' or true
+      render json: { error: 'The product already exists on Steemhunt.' }, status: :unprocessable_entity and return
+    end
 
     if @post.save
       render json: @post, status: :created
@@ -113,17 +117,11 @@ class PostsController < ApplicationController
       "http%://%#{host}#{path}%"
     end
 
-    # Returns canonical urls of given url
-    # e.g.
-    # IN: 'https://facebook.com' (or any of outputs)
-    # OUT: [ 'https://facebook.com', 'http://facebook.com', 'https://www.facebook.com', 'http://www.facebook.com' ]
-    def similar_urls(url)
-      stripped = url.gsub(/^https?:\/\/(www\.)?/, '')
-      [
-        "https://#{stripped}",
-        "https://www.#{stripped}",
-        "http://#{stripped}",
-        "http://www.#{stripped}"
-      ]
+    def exists?(uri)
+      if search = search_url(uri)
+        Post.where('url LIKE ?', search).exists?  # NOTE: Check index scan
+      else
+        'INVALID'
+      end
     end
 end

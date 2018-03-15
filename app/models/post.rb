@@ -3,9 +3,9 @@ require 'json'
 
 class Post < ApplicationRecord
   validates_presence_of :author, :url, :title, :tagline, :images
-  validates_format_of :url, with: /\A(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,})(.*)\z/i
+  validates_format_of :url, with: /\A(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,})(.*)\z/i, message: 'Invalid URL format. Please include http or https at the beginning.'
   validates_format_of :permlink, with: /\A[\d\-a-z]+\z/i, allow_blank: false # digits, dashes, letters only (no underbar)
-  validates_uniqueness_of :url
+  validates_uniqueness_of :url, message: 'The product already exists on Steemhunt.'
 
   def self.data_from_steem(author, permlink)
     uri = URI("https://steemit.com/steemhunt/@#{author}/#{permlink}.json")
