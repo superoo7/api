@@ -54,7 +54,7 @@ class PostsController < ApplicationController
     if @post.update(post_params)
       render json: { result: 'OK' }
     else
-      render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
+      render json: { error: @post.errors.full_messages.first }, status: :unprocessable_entity
     end
   end
 
