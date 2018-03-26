@@ -6,13 +6,25 @@ class PostsController < ApplicationController
   # GET /posts
   def index
     days_ago = params[:days_ago].to_i
+    sort = case params[:sort]
+    when 'created'
+      'created_at DESC'
+    when 'vote_count'
+      'json_array_length(active_votes) DESC'
+    when 'comment_count'
+      'children DESC'
+    else
+      'payout_value DESC'
+    end
+
+
     today = Time.zone.today.to_time
 
     @posts = if days_ago > 0
       Post.where('created_at >= ? AND created_at < ?', today - days_ago.days, today - (days_ago - 1).days)
     else
       Post.where('created_at >= ?', today)
-    end.where(is_active: true).order('payout_value DESC')
+    end.where(is_active: true).order(sort)
     # NOTE: DB indices on `is_active`, `payout_value` are omitted as intended as the number of records on daily posts is small
 
     render json: @posts
