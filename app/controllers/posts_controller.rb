@@ -21,7 +21,9 @@ class PostsController < ApplicationController
 
   # GET /posts/@:author
   def author
-    @posts = Post.where(author: params[:author], is_active: true).order(@sort)
+    @posts = Post.where(author: params[:author], is_active: true)
+                 .order(@sort)
+                 .paginate(page: params[:page], per_page: 20)
 
     render json: @posts
   end

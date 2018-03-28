@@ -20,6 +20,7 @@ gem 'rack-cors'
 gem 'whenever', require: false
 gem 'dotenv-rails'
 gem 'radiator'
+gem 'will_paginate'
 
 group :development, :test do
   # Call 'pry' anywhere in the code to stop execution and get a debugger console
