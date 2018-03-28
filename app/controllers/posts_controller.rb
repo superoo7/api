@@ -2,30 +2,26 @@ class PostsController < ApplicationController
   before_action :ensure_login!, only: [:create, :update, :hide, :destroy]
   before_action :set_post, only: [:show, :update, :refresh, :hide, :destroy]
   before_action :check_ownership!, only: [:update, :destroy, :hide]
+  before_action :set_sort_option, only: [:index, :author]
 
   # GET /posts
   def index
     days_ago = params[:days_ago].to_i
-    sort = case params[:sort]
-    when 'created'
-      'created_at DESC'
-    when 'vote_count'
-      'json_array_length(active_votes) DESC'
-    when 'comment_count'
-      'children DESC'
-    else
-      'payout_value DESC'
-    end
-
-
     today = Time.zone.today.to_time
 
     @posts = if days_ago > 0
       Post.where('created_at >= ? AND created_at < ?', today - days_ago.days, today - (days_ago - 1).days)
     else
       Post.where('created_at >= ?', today)
-    end.where(is_active: true).order(sort)
+    end.where(is_active: true).order(@sort)
     # NOTE: DB indices on `is_active`, `payout_value` are omitted as intended as the number of records on daily posts is small
+
+    render json: @posts
+  end
+
+  # GET /posts/@:author
+  def author
+    @posts = Post.where(author: params[:author], is_active: true).order(@sort)
 
     render json: @posts
   end
@@ -100,6 +96,19 @@ class PostsController < ApplicationController
   end
 
   private
+    def set_sort_option
+      @sort = case params[:sort]
+        when 'created'
+          'created_at DESC'
+        when 'vote_count'
+          'json_array_length(active_votes) DESC'
+        when 'comment_count'
+          'children DESC'
+        else
+          'payout_value DESC'
+        end
+    end
+
     def set_post
       @post = Post.find_by(author: params[:author], permlink: params[:permlink])
       render_404 and return if !@post || !@post.active?
