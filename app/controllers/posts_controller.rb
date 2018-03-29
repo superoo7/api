@@ -21,11 +21,21 @@ class PostsController < ApplicationController
 
   # GET /posts/@:author
   def author
-    @posts = Post.where(author: params[:author], is_active: true)
-                 .order(@sort)
-                 .paginate(page: params[:page], per_page: 20)
+    @posts = Post.where(author: params[:author], is_active: true).order(@sort)
 
-    render json: @posts
+    page = params[:page].to_i
+    page = 1 if page < 1
+    per_page = 20
+
+    if page == 1
+      render json: {
+        total_count: @posts.count,
+        total_payout: @posts.sum(:payout_value),
+        posts: @posts.paginate(page: page, per_page: per_page)
+      }
+    else
+      render json: { posts: @posts.paginate(page: page, per_page: per_page) }
+    end
   end
 
   # GET /posts/@:author/:permlink
