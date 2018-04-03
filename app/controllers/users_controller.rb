@@ -8,6 +8,8 @@ class UsersController < ApplicationController
       @user = User.new(user_params)
     end
 
+    @users.session_count += 1
+
     if @user.save
       render json: @user, status: :ok
     else
