@@ -19,6 +19,28 @@ class PostsController < ApplicationController
     render json: @posts
   end
 
+  def search
+    q = params[:q].to_s
+    terms = q.gsub(/[^A-Za-z0-9\s]/, ' ').split
+
+    sql = """
+      SELECT *
+        FROM (SELECT *,
+                     to_tsvector('english', author) ||
+                     to_tsvector('english', title) ||
+                     to_tsvector('english', tagline) ||
+                     to_tsvector('english', immutable_array_to_string(tags, ' ')) as document
+              FROM posts) search
+        WHERE search.document @@ to_tsquery('english', '#{terms.join(' & ')}')
+          OR url LIKE '#{q}%'
+        ORDER BY payout_value DESC
+        LIMIT 50;
+    """
+    @result = ActiveRecord::Base.connection.execute(sql)
+
+    render json: { posts: @result.as_json(except: [ 'zzzzdocument' ]) }
+  end
+
   # GET /posts/@:author
   def author
     @posts = Post.where(author: params[:author], is_active: true).order(@sort)
@@ -147,12 +169,12 @@ class PostsController < ApplicationController
       # Google Playstore apps use parameters for different products
       return uri if host == 'play.google.com' && path == '/store/apps/details'
 
-      "http%://%#{host}#{path}%"
+      "http%://%#{host}#{path}%" # NOTE: Cannot use index scan
     end
 
     def exists?(uri)
       if search = search_url(uri)
-        Post.where('url LIKE ?', search).exists?  # NOTE: Check index scan
+        Post.where('url LIKE ?', search).exists?
       else
         'INVALID'
       end
