@@ -23,22 +23,17 @@ class PostsController < ApplicationController
     q = params[:q].to_s
     terms = q.gsub(/[^A-Za-z0-9\s]/, ' ').split
 
-    sql = """
-      SELECT *
-        FROM (SELECT *,
-                     to_tsvector('english', author) ||
-                     to_tsvector('english', title) ||
-                     to_tsvector('english', tagline) ||
-                     to_tsvector('english', immutable_array_to_string(tags, ' ')) as document
-              FROM posts) search
-        WHERE search.document @@ to_tsquery('english', '#{terms.join(' & ')}')
-          OR url LIKE '#{q}%'
-        ORDER BY payout_value DESC
-        LIMIT 50;
-    """
-    @result = ActiveRecord::Base.connection.execute(sql)
+    @posts = Post.from("""
+      (SELECT *,
+        to_tsvector('english', author) ||
+        to_tsvector('english', title) ||
+        to_tsvector('english', tagline) ||
+        to_tsvector('english', immutable_array_to_string(tags, ' ')) as document
+      FROM posts) posts
+    """).where("posts.document @@ to_tsquery('english', '#{terms.join(' & ')}') OR url LIKE '#{q}%'").
+    order('payout_value DESC').limit(50)
 
-    render json: { posts: @result.as_json(except: [ 'zzzzdocument' ]) }
+    render json: { posts: @posts.as_json(except: [:document]) }
   end
 
   # GET /posts/@:author
