@@ -3,6 +3,7 @@ Rails.application.routes.draw do
     collection do
       get 'exists'
       get 'search'
+      get 'top'
       patch 'refresh/@:author/:permlink', to: 'posts#refresh', constraints: { author: /[^\/]+/ }
       patch 'hide/@:author/:permlink', to: 'posts#hide', constraints: { author: /[^\/]+/ }
       get '/@:author', to: 'posts#author', constraints: { author: /([^\/]+?)(?=\.json|$|\/)/ } # override, otherwise it cannot include dots

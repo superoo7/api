@@ -2,7 +2,7 @@ class PostsController < ApplicationController
   before_action :ensure_login!, only: [:create, :update, :hide, :destroy]
   before_action :set_post, only: [:show, :update, :refresh, :hide, :destroy]
   before_action :check_ownership!, only: [:update, :destroy, :hide]
-  before_action :set_sort_option, only: [:index, :author]
+  before_action :set_sort_option, only: [:index, :author, :top]
 
   # GET /posts
   def index
@@ -14,10 +14,25 @@ class PostsController < ApplicationController
     else
       Post.where('created_at >= ?', today)
     end.where(is_active: true).order(@sort)
-    # NOTE: DB indices on `is_active`, `payout_value` are omitted as intended as the number of records on daily posts is small
 
     render json: @posts
   end
+
+  def top
+    now = Time.zone.now
+
+    @posts = case params[:period]
+      when 'week'
+        Post.where('created_at >= ?', now.beginning_of_week)
+      when 'month'
+        Post.where('created_at >= ?', now.beginning_of_month)
+      else
+        Post.all
+      end.where(is_active: true).order(@sort)
+
+    render_pages
+  end
+
 
   def search
     q = params[:q].to_s
@@ -40,19 +55,7 @@ class PostsController < ApplicationController
   def author
     @posts = Post.where(author: params[:author], is_active: true).order(@sort)
 
-    page = params[:page].to_i
-    page = 1 if page < 1
-    per_page = 20
-
-    if page == 1
-      render json: {
-        total_count: @posts.count,
-        total_payout: @posts.sum(:payout_value),
-        posts: @posts.paginate(page: page, per_page: per_page)
-      }
-    else
-      render json: { posts: @posts.paginate(page: page, per_page: per_page) }
-    end
+    render_pages
   end
 
   # GET /posts/@:author/:permlink
@@ -125,6 +128,22 @@ class PostsController < ApplicationController
   end
 
   private
+    def render_pages
+      page = params[:page].to_i
+      page = 1 if page < 1
+      per_page = 20
+
+      if page == 1
+        render json: {
+          total_count: @posts.count,
+          total_payout: @posts.sum(:payout_value),
+          posts: @posts.paginate(page: page, per_page: per_page)
+        }
+      else
+        render json: { posts: @posts.paginate(page: page, per_page: per_page) }
+      end
+    end
+
     def set_sort_option
       @sort = case params[:sort]
         when 'created'
