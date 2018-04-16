@@ -1,5 +1,9 @@
 require 'radiator'
 
+def formatted_number(number, precision = 2)
+  number.round(precision).to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
+end
+
 desc 'Daily Post'
 task :daily_post => :environment do |t, args|
   today = Time.zone.today.to_time
@@ -31,7 +35,7 @@ task :daily_post => :environment do |t, args|
   tags = ['steemhunt'] + tag_count.sort_by {|k,v| v}.reverse.map(&:first).first(4)
 
   body = "Hello hunters!\n\n" +
-    "Yesterday, there were #{total_count} products, and $#{total_generated} SBD hunter’s rewards were generated.\n\n" +
+    "Yesterday, there were #{total_count} products, and $#{formatted_number total_generated} SBD hunter’s rewards were generated.\n\n" +
     "# Top 10 Hunts on March 11, 2018\n" +
     "Take a look at the top 10 hunted products yesterday for your daily dose of inspiration 😎\n"
 
@@ -40,7 +44,7 @@ task :daily_post => :environment do |t, args|
       "#{post.tagline}\n" +
       "![](#{post.images.first['link']})\n" +
       ">@#{post.author} · #{post.active_votes.count} votes and #{post.children} comments\n" +
-      "Pending payout: $#{post.payout_value} SBD\n"
+      "Pending payout: $#{formatted_number post.payout_value} SBD\n"
   end
 
   body += "---\n" +
