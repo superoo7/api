@@ -157,8 +157,8 @@ task :voting_bot => :environment do |t, args|
     total_vp_used += voting_power
 
     puts "--> Voting on ##{ranking} with #{voting_power}% power: @#{post.author}/#{post.permlink}"
-    result = vote(post.author, post.permlink, voting_power)
-    puts "----> #{result}"
+    res = vote(post.author, post.permlink, voting_power)
+    puts "----> #{res.result.try(:id) || res.error}"
   end
 
   prosCons.each_with_index do |comment, i|
@@ -168,8 +168,8 @@ task :voting_bot => :environment do |t, args|
 
     puts "--> Voting on ##{ranking} (Pros & Cons) with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
 
-    result = vote(comment[:author], comment[:permlink], voting_power)
-    puts "----> #{result}"
+    res = vote(comment[:author], comment[:permlink], voting_power)
+    puts "----> #{res.result.try(:id) || res.error}"
   end
 
   vp_left = api.get_accounts(['steemhunt'])['result'][0]['voting_power']
