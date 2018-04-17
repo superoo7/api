@@ -74,6 +74,20 @@ def natural_distributed_array(size)
   selected.map { |n| n.round(2) }
 end
 
+def vote(author, permlink, power)
+  sleep(3) # Can only vote once every 3 seconds.
+  tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
+  vote = {
+    type: :vote,
+    voter: 'steemhunt',
+    author: author,
+    permlink: permlink,
+    weight: (power * 100).to_i
+  }
+  tx.operations << vote
+  tx.process(true)
+end
+
 desc 'Voting bot'
 task :voting_bot => :environment do |t, args|
   today = Time.zone.today.to_time
@@ -134,7 +148,6 @@ task :voting_bot => :environment do |t, args|
   total_count = posts.size + prosCons.size
   puts "- No posts, exit" and return if total_count == 0
 
-  tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
   total_vp_used = 0
   vp_distribution = natural_distributed_array(total_count)
 
@@ -144,15 +157,8 @@ task :voting_bot => :environment do |t, args|
     total_vp_used += voting_power
 
     puts "--> Voting on ##{ranking} with #{voting_power}% power: @#{post.author}/#{post.permlink}"
-
-    vote = {
-      type: :vote,
-      voter: 'steemhunt',
-      author: post.author,
-      permlink: post.permlink,
-      weight: (voting_power * 100).to_i
-    }
-    tx.operations << vote
+    result = vote(post.author, post.permlink, voting_power)
+    puts "----> #{result}"
   end
 
   prosCons.each_with_index do |comment, i|
@@ -162,19 +168,9 @@ task :voting_bot => :environment do |t, args|
 
     puts "--> Voting on ##{ranking} (Pros & Cons) with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
 
-    vote = {
-      type: :vote,
-      voter: 'steemhunt',
-      author: comment[:author],
-      permlink: comment[:permlink],
-      weight: (voting_power * 100).to_i
-    }
-    tx.operations << vote
+    result = vote(comment[:author], comment[:permlink], voting_power)
+    puts "----> #{result}"
   end
-
-  puts "- Populating blockchain begin"
-  tx.process(true)
-  puts "- Transaction succeed\n\n"
 
   vp_left = api.get_accounts(['steemhunt'])['result'][0]['voting_power']
   puts "Votings Finished, #{total_vp_used.round(2)}% VP used, #{vp_left / 100}% VP left"
