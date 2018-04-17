@@ -4,8 +4,8 @@ desc 'Synchronize posts'
 task :sync_posts => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
-  week_ago_1 = (today - 7.days).to_time
-  week_ago_2 = (today - 8.days).to_time
+  week_ago_1 = (today - 8.days).to_time # take care of timezone difference
+  week_ago_2 = (today - 9.days).to_time
 
   posts = Post.where('(created_at >= ? AND created_at < ?) OR (created_at >= ? AND created_at < ?)', yesterday, today, week_ago_2, week_ago_1).
                where(is_active: true)
