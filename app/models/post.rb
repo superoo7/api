@@ -13,8 +13,8 @@ class Post < ApplicationRecord
     JSON.parse(response)['post']
   end
 
-  def sync!
-    json = self.class.data_from_steem(author, permlink)
+  def sync!(json = nil)
+    json ||= self.class.data_from_steem(author, permlink)
     self.active_votes = json['active_votes']
     self.payout_value = json['total_payout_value'].to_f + json['curator_payout_value'].to_f + json['pending_payout_value'].to_f
     self.children = json['children']
