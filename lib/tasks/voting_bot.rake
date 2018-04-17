@@ -2,6 +2,8 @@ require 'radiator'
 
 POWER_TOTAL = 1000.0
 POWER_MAX = 100.0
+MAX_POST_VOTING_COUNT = 500
+MAX_COMMENT_VOTING_COUNT = 200
 
 def get_minimum_power(size)
   minimum = if size < 20
@@ -81,26 +83,55 @@ task :voting_bot => :environment do |t, args|
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                where(is_active: true).
                order('payout_value DESC').
-               limit(500)
+               limit(MAX_POST_VOTING_COUNT).to_a
 
-  post_count = posts.count
-  puts "- Total #{post_count} posts posted on #{yesterday.strftime("%b %e, %Y")}"
+  puts "- Total #{posts.size} posts posted on #{yesterday.strftime("%b %e, %Y")}"
 
   api = Radiator::Api.new
   prosCons = []
-  posts.each do |post|
-    comments = api.get_content_replies(post.author, post.permlink)['result']
-    comments.each do |comment|
-      if comment['body'] =~ /pros:/i && comment['body'] =~ /cons:/i
-        prosCons.push({ author: comment['author'], permlink: comment['permlink'] })
-        puts "----> Pros & Cons comment found: @#{comment['author']}/#{comment['permlink']}"
+  postsToSkip = []
+  posts.each_with_index do |post, i|
+    puts "-- @#{post.author}/#{post.permlink}"
+    votes = api.get_content(post.author, post.permlink)['result']['active_votes']
+    puts "----> #{votes.size} active votes returned"
+    votes.each do |vote|
+      if vote['voter'] == 'steemhunt'
+        postsToSkip << post.id
+        puts "----> SKIP - Already voted"
       end
     end
-  end
-  prosCons = prosCons.first(200)
-  puts "- Total #{prosCons.size} Pros & Cons comments found"
 
-  total_count = post_count + prosCons.size # max 700 intotal
+    comments = api.get_content_replies(post.author, post.permlink)['result']
+    puts "----> #{comments.size} comments returned"
+    comments.each do |comment|
+      if comment['body'] =~ /pros:/i && comment['body'] =~ /cons:/i
+        votes = api.get_content_replies(comment['author'], comment['permlink'])['result']['active_votes']
+
+        shouldSkip = false
+        votes.each do |vote|
+          if vote['voter'] == 'steemhunt'
+            puts "----> SKIP - Already voted P & C: @#{comment['author']}/#{comment['permlink']}"
+          end
+        end
+
+        unless shouldSkip
+          prosCons.push({ author: comment['author'], permlink: comment['permlink'] })
+          puts "--> Pros & Cons comment found: @#{comment['author']}/#{comment['permlink']}"
+        end
+      end
+    end
+
+    if prosCons.size >= MAX_COMMENT_VOTING_COUNT
+      puts "----> TOO MANY COMMENTS. BREAK"
+      break
+    end
+  end
+  puts "- Total #{prosCons.size} Pros & Cons comments found\n\n"
+
+  posts.reject! { |post| postsToSkip.include?(post.id) }
+  puts "== VOTING ON #{posts.size} POSTS & #{prosCons.size} COMMENTS =="
+
+  total_count = posts.size + prosCons.size
   puts "- No posts, exit" and return if total_count == 0
 
   tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
@@ -125,7 +156,7 @@ task :voting_bot => :environment do |t, args|
   end
 
   prosCons.each_with_index do |comment, i|
-    ranking = post_count + i + 1
+    ranking = posts.size + i + 1
     voting_power = get_voting_power(ranking - 1, total_count)
     total_vp_used += voting_power
 
@@ -141,7 +172,9 @@ task :voting_bot => :environment do |t, args|
     tx.operations << vote
   end
 
+  puts "- Populating blockchain begin"
   # tx.process(true)
+  puts "- Transaction succeed\n\n"
 
   vp_left = api.get_accounts(['steemhunt'])['result'][0]['voting_power']
   puts "Votings Finished, #{total_vp_used.round(2)}% VP used, #{vp_left / 100}% VP left"
