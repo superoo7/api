@@ -173,7 +173,7 @@ task :voting_bot => :environment do |t, args|
   end
 
   puts "- Populating blockchain begin"
-  # tx.process(true)
+  tx.process(true)
   puts "- Transaction succeed\n\n"
 
   vp_left = api.get_accounts(['steemhunt'])['result'][0]['voting_power']
