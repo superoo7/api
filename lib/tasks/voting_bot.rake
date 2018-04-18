@@ -193,8 +193,8 @@ task :voting_bot => :environment do |t, args|
       puts "----> SKIP - Already voted"
     else
       res = vote(post.author, post.permlink, voting_power)
+      puts "----> #{res.result.try(:id) || res.error}"
     end
-    puts "----> #{res.result.try(:id) || res.error}"
   end
 
   prosCons.each_with_index do |comment, i|
@@ -208,8 +208,8 @@ task :voting_bot => :environment do |t, args|
       puts "----> SKIP - Already voted"
     else
       res = vote(comment[:author], comment[:permlink], voting_power)
+      puts "----> #{res.result.try(:id) || res.error}"
     end
-    puts "----> #{res.result.try(:id) || res.error}"
   end
 
   vp_left = with_retry(3) do
