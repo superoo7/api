@@ -105,7 +105,10 @@ def with_retry(limit)
   limit.times do |i|
     begin
       res = yield i
-      raise if res.try(:error)
+      if res.try(:error)
+        puts res.error
+        raise
+      end
 
       return res
     rescue => e
@@ -208,7 +211,7 @@ task :voting_bot => :environment do |t, args|
       puts "----> SKIP - Already voted"
     else
       res = vote(comment[:author], comment[:permlink], voting_power)
-      puts "----> #{res.result.try(:id) || res.error}"
+      puts "----> #{res.result.try(:id) || res}"
     end
   end
 
