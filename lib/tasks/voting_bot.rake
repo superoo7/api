@@ -85,7 +85,32 @@ def vote(author, permlink, power)
     weight: (power * 100).to_i
   }
   tx.operations << vote
-  tx.process(true)
+  with_retry(3) do
+    tx.process(true)
+  end
+end
+
+def run_and_retry_on_exception(cmd, tries: 0, max_tries: 3, delay: 10)
+  tries += 1
+  run_or_raise(cmd)
+rescue SomeException => exception
+  report_exception(exception, cmd: cmd)
+  unless tries >= max_tries
+    sleep delay
+    retry
+  end
+end
+
+def with_retry(limit)
+  limit.times do |i|
+    begin
+      return yield i
+    rescue => e
+      puts e
+      raise e if i + 1 == limit
+    end
+    sleep(10)
+  end
 end
 
 desc 'Voting bot'
@@ -106,7 +131,9 @@ task :voting_bot => :environment do |t, args|
   postsToSkip = []
   posts.each_with_index do |post, i|
     puts "-- @#{post.author}/#{post.permlink}"
-    votes = api.get_content(post.author, post.permlink)['result']['active_votes']
+    votes = with_retry(3) do
+      api.get_content(post.author, post.permlink)['result']['active_votes']
+    end
     puts "----> #{votes.size} active votes returned"
     votes.each do |vote|
       if vote['voter'] == 'steemhunt'
@@ -115,11 +142,15 @@ task :voting_bot => :environment do |t, args|
       end
     end
 
-    comments = api.get_content_replies(post.author, post.permlink)['result']
+    comments = with_retry(3) do
+      api.get_content_replies(post.author, post.permlink)['result']
+    end
     puts "----> #{comments.size} comments returned"
     comments.each do |comment|
       if comment['body'] =~ /pros:/i && comment['body'] =~ /cons:/i
-        votes = api.get_content_replies(comment['author'], comment['permlink'])['result']['active_votes']
+        votes = with_retry(3) do
+          api.get_content(comment['author'], comment['permlink'])['result']['active_votes']
+        end
 
         shouldSkip = false
         votes.each do |vote|
@@ -172,6 +203,8 @@ task :voting_bot => :environment do |t, args|
     puts "----> #{res.result.try(:id) || res.error}"
   end
 
-  vp_left = api.get_accounts(['steemhunt'])['result'][0]['voting_power']
+  vp_left = with_retry(3) do
+    api.get_accounts(['steemhunt'])['result'][0]['voting_power']
+  end
   puts "Votings Finished, #{total_vp_used.round(2)}% VP used, #{vp_left / 100}% VP left"
 end
