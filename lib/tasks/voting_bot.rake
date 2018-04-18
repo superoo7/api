@@ -104,7 +104,10 @@ end
 def with_retry(limit)
   limit.times do |i|
     begin
-      return yield i
+      res = yield i
+      raise e if res.error
+
+      return res
     rescue => e
       puts e
       raise e if i + 1 == limit
