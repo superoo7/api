@@ -82,4 +82,4 @@ namespace :assets do
 end
 
 after 'deploy:symlink:shared', 'dotenv:symlink'
-after 'deploy:symlink:shared', 'assets:upload'
+# after 'deploy:symlink:shared', 'assets:upload'
