@@ -162,6 +162,7 @@ task :voting_bot => :environment do |t, args|
         shouldSkip = false
         votes.each do |vote|
           if vote['voter'] == 'steemhunt'
+            shouldSkip = true
             puts "----> SKIP - Already voted P & C: @#{comment['author']}/#{comment['permlink']}"
           end
         end
