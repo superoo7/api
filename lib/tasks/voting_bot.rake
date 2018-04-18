@@ -167,7 +167,7 @@ task :voting_bot => :environment do |t, args|
           end
         end
 
-        prosCons.push({ author: comment['author'], permlink: comment['permlink'] }, shouldSkip: shouldSkip)
+        prosCons.push({ author: comment['author'], permlink: comment['permlink'], shouldSkip: shouldSkip })
         puts "--> Pros & Cons comment found: @#{comment['author']}/#{comment['permlink']}"
       end
     end
