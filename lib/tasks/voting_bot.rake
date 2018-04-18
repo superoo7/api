@@ -129,6 +129,7 @@ task :voting_bot => :environment do |t, args|
   api = Radiator::Api.new
   prosCons = []
   postsToSkip = []
+  commentsToSkip = []
   posts.each_with_index do |post, i|
     puts "-- @#{post.author}/#{post.permlink}"
     votes = with_retry(3) do
@@ -159,10 +160,8 @@ task :voting_bot => :environment do |t, args|
           end
         end
 
-        unless shouldSkip
-          prosCons.push({ author: comment['author'], permlink: comment['permlink'] })
-          puts "--> Pros & Cons comment found: @#{comment['author']}/#{comment['permlink']}"
-        end
+        prosCons.push({ author: comment['author'], permlink: comment['permlink'] }, shouldSkip: shouldSkip)
+        puts "--> Pros & Cons comment found: @#{comment['author']}/#{comment['permlink']}"
       end
     end
 
@@ -173,7 +172,6 @@ task :voting_bot => :environment do |t, args|
   end
   puts "- Total #{prosCons.size} Pros & Cons comments found\n\n"
 
-  posts.reject! { |post| postsToSkip.include?(post.id) }
   puts "== VOTING ON #{posts.size} POSTS & #{prosCons.size} COMMENTS =="
 
   total_count = posts.size + prosCons.size
@@ -188,7 +186,11 @@ task :voting_bot => :environment do |t, args|
     total_vp_used += voting_power
 
     puts "--> Voting on ##{ranking} with #{voting_power}% power: @#{post.author}/#{post.permlink}"
-    res = vote(post.author, post.permlink, voting_power)
+    if postsToSkip.include?(post.id)
+      puts "----> SKIP - Already voted"
+    else
+      res = vote(post.author, post.permlink, voting_power)
+    end
     puts "----> #{res.result.try(:id) || res.error}"
   end
 
@@ -199,7 +201,11 @@ task :voting_bot => :environment do |t, args|
 
     puts "--> Voting on ##{ranking} (Pros & Cons) with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
 
-    res = vote(comment[:author], comment[:permlink], voting_power)
+    if comment[:shouldSkip]
+      puts "----> SKIP - Already voted"
+    else
+      res = vote(comment[:author], comment[:permlink], voting_power)
+    end
     puts "----> #{res.result.try(:id) || res.error}"
   end
 
