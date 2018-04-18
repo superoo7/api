@@ -53,6 +53,16 @@ task :daily_post => :environment do |t, args|
     "A place where you can dig products and earn STEEM.\n" +
     "[Steemhunt.com](https://steemhunt.com)\n\n" +
     "*Join our [Telegram](https://t.me/joinchat/AzcqGxCV1FZ8lJHVgHOgGQ) or [Discord](https://discord.gg/mWXpgks) channel for feedbacks & questions.*\n" +
+    "*Support Steemhunt with Steem Power Delegation:\n" +
+    "[500 SP](https://steemconnect.com/sign/delegateVestingShares?delegator=&delegatee=steemhunt&vesting_shares=500%20SP) |" +
+    "[1000 SP](https://steemconnect.com/sign/delegateVestingShares?delegator=&delegatee=steemhunt&vesting_shares=1000%20SP) |" +
+    "[5000 SP](https://steemconnect.com/sign/delegateVestingShares?delegator=&delegatee=steemhunt&vesting_shares=5000%20SP) |" +
+    "[10K SP](https://steemconnect.com/sign/delegateVestingShares?delegator=&delegatee=steemhunt&vesting_shares=10000%20SP) |" +
+    "[20K SP](https://steemconnect.com/sign/delegateVestingShares?delegator=&delegatee=steemhunt&vesting_shares=20000%20SP) |" +
+    "[50K SP](https://steemconnect.com/sign/delegateVestingShares?delegator=&delegatee=steemhunt&vesting_shares=50000%20SP) |" +
+    "[100K SP](https://steemconnect.com/sign/delegateVestingShares?delegator=&delegatee=steemhunt&vesting_shares=100000%20SP)*\n" +
+    "*More information about our Sponsor program is [here](https://steemit.com/steemhunt/@steemhunt/introducing-incentives-for-steemhunt-sponsors)*\n\n" +
+    "*Support Steemhunt by following our [curation trail](https://steemauto.com/dash.php?trail=steemhunt&i=1)*" +
     "</center>"
 
   tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
