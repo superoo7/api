@@ -194,7 +194,7 @@ task :voting_bot => :environment do |t, args|
 
   prosCons.each_with_index do |comment, i|
     ranking = posts.size + i + 1
-    voting_power = get_voting_power(ranking - 1, total_count)
+    voting_power = vp_distribution[ranking - 1]
     total_vp_used += voting_power
 
     puts "--> Voting on ##{ranking} (Pros & Cons) with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
