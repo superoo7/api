@@ -105,7 +105,7 @@ def with_retry(limit)
   limit.times do |i|
     begin
       res = yield i
-      raise e if res.error
+      raise e if res.try(:error)
 
       return res
     rescue => e
