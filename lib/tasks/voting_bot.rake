@@ -119,6 +119,10 @@ def with_retry(limit)
   end
 end
 
+def get_bid_bot_ids
+  JSON.parse(File.read("#{Rails.root}/db/bid_bot_ids.json"))
+end
+
 desc 'Voting bot'
 task :voting_bot => :environment do |t, args|
   today = Time.zone.today.to_time
@@ -133,6 +137,7 @@ task :voting_bot => :environment do |t, args|
   puts "- Total #{posts.size} posts posted on #{yesterday.strftime("%b %e, %Y")}"
 
   api = Radiator::Api.new
+  bid_bot_ids = get_bid_bot_ids
   prosCons = []
   postsToSkip = []
   commentsToSkip = []
@@ -146,6 +151,11 @@ task :voting_bot => :environment do |t, args|
       if vote['voter'] == 'steemhunt'
         postsToSkip << post.id
         puts "----> SKIP - Already voted"
+      end
+
+      if bid_bot_ids.include?(vote['voter'])
+        postsToSkip << post.id
+        puts "----> SKIP - Bitbot use detected: #{vote['voter']}"
       end
     end
 
@@ -194,7 +204,7 @@ task :voting_bot => :environment do |t, args|
 
     puts "--> Voting on ##{ranking} with #{voting_power}% power: @#{post.author}/#{post.permlink}"
     if postsToSkip.include?(post.id)
-      puts "----> SKIP - Already voted"
+      puts "----> SKIPPED"
     else
       res = vote(post.author, post.permlink, voting_power)
       puts "----> #{res.result.try(:id) || res.error}"
@@ -209,7 +219,7 @@ task :voting_bot => :environment do |t, args|
     puts "--> Voting on ##{ranking} (Pros & Cons) with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
 
     if comment[:shouldSkip]
-      puts "----> SKIP - Already voted"
+      puts "----> SKIPPED"
     else
       res = vote(comment[:author], comment[:permlink], voting_power)
       puts "----> #{res.result.try(:id) || res}"
