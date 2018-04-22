@@ -1,4 +1,5 @@
 require 'radiator'
+require 's_logger'
 
 def formatted_number(number, precision = 2)
   number.round(precision).to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
@@ -11,7 +12,7 @@ task :daily_post => :environment do |t, args|
 
   date = yesterday.strftime("%b %e, %Y")
   title = "Daily Top 10 Hunts on Steemhunt (#{date})"
-  puts "Start posting - #{title}"
+  SLogger.log "Start posting - #{title}"
 
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
               where(is_active: true).
@@ -87,5 +88,5 @@ task :daily_post => :environment do |t, args|
   tx.operations << comment
   tx.process(true)
 
-  puts "Post succeeded"
+  SLogger.log "Post succeeded"
 end

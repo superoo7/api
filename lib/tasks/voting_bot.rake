@@ -1,4 +1,5 @@
 require 'radiator'
+require 's_logger'
 
 POWER_TOTAL = 1000.0
 POWER_MAX = 100.0
@@ -106,13 +107,13 @@ def with_retry(limit)
     begin
       res = yield i
       if res.try(:error)
-        puts res.error
+        SLogger.log res.error
         raise
       end
 
       return res
     rescue => e
-      puts e
+      SLogger.log e
       raise e if i + 1 == limit
     end
     sleep(10)
@@ -128,13 +129,13 @@ task :voting_bot => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  puts "Voting on daily post begin"
+  SLogger.log "Voting on daily post begin"
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                where(is_active: true).
                order('payout_value DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
 
-  puts "- Total #{posts.size} posts posted on #{yesterday.strftime("%b %e, %Y")}"
+  SLogger.log "- Total #{posts.size} posts posted on #{yesterday.strftime("%b %e, %Y")}"
 
   api = Radiator::Api.new
   bid_bot_ids = get_bid_bot_ids
@@ -142,27 +143,27 @@ task :voting_bot => :environment do |t, args|
   postsToSkip = []
   commentsToSkip = []
   posts.each_with_index do |post, i|
-    puts "-- @#{post.author}/#{post.permlink}"
+    SLogger.log "-- @#{post.author}/#{post.permlink}"
     votes = with_retry(3) do
       api.get_content(post.author, post.permlink)['result']['active_votes']
     end
-    puts "----> #{votes.size} active votes returned"
+    SLogger.log "----> #{votes.size} active votes returned"
     votes.each do |vote|
       if vote['voter'] == 'steemhunt'
         postsToSkip << post.id
-        puts "----> SKIP - Already voted"
+        SLogger.log "----> SKIP - Already voted"
       end
 
       if bid_bot_ids.include?(vote['voter'])
         postsToSkip << post.id
-        puts "----> SKIP - Bitbot use detected: #{vote['voter']}"
+        SLogger.log "----> SKIP - Bitbot use detected: #{vote['voter']}"
       end
     end
 
     comments = with_retry(3) do
       api.get_content_replies(post.author, post.permlink)['result']
     end
-    puts "----> #{comments.size} comments returned"
+    SLogger.log "----> #{comments.size} comments returned"
     comments.each do |comment|
       if comment['body'] =~ /pros:/i && comment['body'] =~ /cons:/i
         votes = with_retry(3) do
@@ -173,26 +174,26 @@ task :voting_bot => :environment do |t, args|
         votes.each do |vote|
           if vote['voter'] == 'steemhunt'
             shouldSkip = true
-            puts "----> SKIP - Already voted P & C: @#{comment['author']}/#{comment['permlink']}"
+            SLogger.log "----> SKIP - Already voted P & C: @#{comment['author']}/#{comment['permlink']}"
           end
         end
 
         prosCons.push({ author: comment['author'], permlink: comment['permlink'], shouldSkip: shouldSkip })
-        puts "--> Pros & Cons comment found: @#{comment['author']}/#{comment['permlink']}"
+        SLogger.log "--> Pros & Cons comment found: @#{comment['author']}/#{comment['permlink']}"
       end
     end
 
     if prosCons.size >= MAX_COMMENT_VOTING_COUNT
-      puts "----> TOO MANY COMMENTS. BREAK"
+      SLogger.log "----> TOO MANY COMMENTS. BREAK"
       break
     end
   end
-  puts "- Total #{prosCons.size} Pros & Cons comments found\n\n"
+  SLogger.log "- Total #{prosCons.size} Pros & Cons comments found\n\n"
 
-  puts "== VOTING ON #{posts.size} POSTS & #{prosCons.size} COMMENTS =="
+  SLogger.log "== VOTING ON #{posts.size} POSTS & #{prosCons.size} COMMENTS =="
 
   total_count = posts.size + prosCons.size
-  puts "- No posts, exit" and return if total_count == 0
+  SLogger.log "- No posts, exit" and return if total_count == 0
 
   total_vp_used = 0
   vp_distribution = natural_distributed_array(total_count)
@@ -202,12 +203,12 @@ task :voting_bot => :environment do |t, args|
     voting_power = vp_distribution[ranking - 1]
     total_vp_used += voting_power
 
-    puts "--> Voting on ##{ranking} with #{voting_power}% power: @#{post.author}/#{post.permlink}"
+    SLogger.log "--> Voting on ##{ranking} with #{voting_power}% power: @#{post.author}/#{post.permlink}"
     if postsToSkip.include?(post.id)
-      puts "----> SKIPPED"
+      SLogger.log "----> SKIPPED"
     else
       res = vote(post.author, post.permlink, voting_power)
-      puts "----> #{res.result.try(:id) || res.error}"
+      SLogger.log "----> #{res.result.try(:id) || res.error}"
     end
   end
 
@@ -216,18 +217,18 @@ task :voting_bot => :environment do |t, args|
     voting_power = vp_distribution[ranking - 1]
     total_vp_used += voting_power
 
-    puts "--> Voting on ##{ranking} (Pros & Cons) with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
+    SLogger.log "--> Voting on ##{ranking} (Pros & Cons) with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
 
     if comment[:shouldSkip]
-      puts "----> SKIPPED"
+      SLogger.log "----> SKIPPED"
     else
       res = vote(comment[:author], comment[:permlink], voting_power)
-      puts "----> #{res.result.try(:id) || res}"
+      SLogger.log "----> #{res.result.try(:id) || res}"
     end
   end
 
   vp_left = with_retry(3) do
     api.get_accounts(['steemhunt'])['result'][0]['voting_power']
   end
-  puts "Votings Finished, #{total_vp_used.round(2)}% VP used, #{vp_left / 100}% VP left"
+  SLogger.log "Votings Finished, #{total_vp_used.round(2)}% VP used, #{vp_left / 100}% VP left"
 end
