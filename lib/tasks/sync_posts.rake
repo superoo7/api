@@ -3,6 +3,7 @@ require 's_logger'
 
 desc 'Synchronize posts'
 task :sync_posts => :environment do |t, args|
+  logger = SLogger.new
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
   week_ago_1 = (today - 8.days).to_time # take care of timezone difference
@@ -11,22 +12,22 @@ task :sync_posts => :environment do |t, args|
   posts = Post.where('(created_at >= ? AND created_at < ?) OR (created_at >= ? AND created_at < ?)', yesterday, today, week_ago_2, week_ago_1).
                where(is_active: true)
 
-  SLogger.log "== UPDATES #{posts.count} POSTS =="
+  logger.log "UPDATES #{posts.count} POSTS", true
 
   api = Radiator::Api.new
   diff = 0
   posts.each do |post|
-    SLogger.log "- @#{post.author}/#{post.permlink}"
+    logger.log "@#{post.author}/#{post.permlink}"
     old_votes = post.active_votes.size
     old_payout = post.payout_value
     old_comments = post.children
     post.sync! api.get_content(post.author, post.permlink)['result']
 
     diff += post.payout_value - old_payout
-    SLogger.log "--> Payout: #{old_payout.round(2)} -> #{post.payout_value.round(2)}" if diff.abs > 0.1
-    SLogger.log "--> Likes: #{old_votes} -> #{post.active_votes.size}" if post.active_votes.size != old_votes
-    SLogger.log "--> Comments: #{old_comments} -> #{post.children}" if post.children != old_comments
+    logger.log "--> Payout: #{old_payout.round(2)} -> #{post.payout_value.round(2)}" if diff.abs > 0.1
+    logger.log "--> Likes: #{old_votes} -> #{post.active_votes.size}" if post.active_votes.size != old_votes
+    logger.log "--> Comments: #{old_comments} -> #{post.children}" if post.children != old_comments
   end
 
-  SLogger.log "Finished with diff: + $#{diff.round(2)} SBD"
+  logger.log "Finished with diff: + $#{diff.round(2)} SBD", true
 end
