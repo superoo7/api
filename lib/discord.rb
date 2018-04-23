@@ -6,7 +6,7 @@ class Discord
     }.to_json
 
     if Rails.env.production?
-      system("curl -s -S -H \"Content-Type: application/json\" -X POST -d '#{payload}' #{ENV['DISCORD_WEB_HOOK']} > /dev/null")
+      system("curl -s -S -H \"Content-Type: application/json\" -X POST -d '#{payload}' #{ENV['DISCORD_WEB_HOOK']}")
     else
       puts "---> DISCORD payload: #{payload}"
     end
