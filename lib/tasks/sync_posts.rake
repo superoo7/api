@@ -11,22 +11,22 @@ task :sync_posts => :environment do |t, args|
   posts = Post.where('(created_at >= ? AND created_at < ?) OR (created_at >= ? AND created_at < ?)', yesterday, today, week_ago_2, week_ago_1).
                where(is_active: true)
 
-  Slogger.log "== UPDATES #{posts.count} POSTS =="
+  SLogger.log "== UPDATES #{posts.count} POSTS =="
 
   api = Radiator::Api.new
   diff = 0
   posts.each do |post|
-    Slogger.log "- @#{post.author}/#{post.permlink}"
+    SLogger.log "- @#{post.author}/#{post.permlink}"
     old_votes = post.active_votes.size
     old_payout = post.payout_value
     old_comments = post.children
     post.sync! api.get_content(post.author, post.permlink)['result']
 
     diff += post.payout_value - old_payout
-    Slogger.log "--> Payout: #{old_payout.round(2)} -> #{post.payout_value.round(2)}" if diff.abs > 0.1
-    Slogger.log "--> Likes: #{old_votes} -> #{post.active_votes.size}" if post.active_votes.size != old_votes
-    Slogger.log "--> Comments: #{old_comments} -> #{post.children}" if post.children != old_comments
+    SLogger.log "--> Payout: #{old_payout.round(2)} -> #{post.payout_value.round(2)}" if diff.abs > 0.1
+    SLogger.log "--> Likes: #{old_votes} -> #{post.active_votes.size}" if post.active_votes.size != old_votes
+    SLogger.log "--> Comments: #{old_comments} -> #{post.children}" if post.children != old_comments
   end
 
-  Slogger.log "Finished with diff: + $#{diff.round(2)} SBD"
+  SLogger.log "Finished with diff: + $#{diff.round(2)} SBD"
 end
