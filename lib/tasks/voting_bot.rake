@@ -167,7 +167,7 @@ task :voting_bot => :environment do |t, args|
     end
     # logger.log "----> #{comments.size} comments returned"
     comments.each do |comment|
-      if comment['body'] =~ /pros:/i && comment['body'] =~ /cons:/i
+      if comment['body'] =~ /pros\s*:/i && comment['body'] =~ /cons\s*:/i
         votes = with_retry(3) do
           api.get_content(comment['author'], comment['permlink'])['result']['active_votes']
         end
