@@ -233,5 +233,5 @@ task :voting_bot => :environment do |t, args|
     api.get_accounts(['steemhunt'])['result'][0]['voting_power']
   end
 
-  logger.log "Votings Finished, #{total_vp_used.round(2)}% VP used, #{vp_left / 100}% VP left", true
+  logger.log "Votings Finished, #{total_vp_used.round(2)}% VP used, #{(vp_left / 100.0).round(2)}% VP left", true
 end
