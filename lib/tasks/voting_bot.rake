@@ -121,7 +121,9 @@ def with_retry(limit)
 end
 
 def get_bid_bot_ids
-  JSON.parse(File.read("#{Rails.root}/db/bid_bot_ids.json"))
+  # Disable bidbot filtering - REF: #discussion on Discord on 2018-04-30
+  # JSON.parse(File.read("#{Rails.root}/db/bid_bot_ids.json"))
+  []
 end
 
 desc 'Voting bot'
