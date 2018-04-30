@@ -1,7 +1,7 @@
 require 'radiator'
 require 's_logger'
 
-POWER_TOTAL = 1000.0
+POWER_TOTAL = 1100.0
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 500
 MAX_COMMENT_VOTING_COUNT = 200
