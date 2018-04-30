@@ -1,6 +1,12 @@
 require 'radiator'
 require 's_logger'
 
+# NOTE: The total voting power is not a constant number like 1000
+#   it will be closer to 1100 because:
+#   when someone cast 100% voting when they have 80% vp left,
+#   it will deduct 0.8 * 100 * 0.02 = 1.6% vp (not 2.0%)
+#
+#   We need to fix this correctly later
 POWER_TOTAL = 1100.0
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 500
@@ -55,6 +61,13 @@ def natural_distribution_test(size, temperature)
 
   allocated
 end
+
+# def actual_vp_left(array)
+#   vp_left = 100.0
+#   array.each { |vp| vp_left -= (vp_left / 100) * vp * 0.02 }
+
+#   vp_left
+# end
 
 def natural_distributed_array(size)
   return Array.new(size, POWER_MAX) if size <= POWER_TOTAL /  POWER_MAX
