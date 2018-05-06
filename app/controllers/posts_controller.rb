@@ -159,7 +159,7 @@ class PostsController < ApplicationController
 
     def set_post
       @post = Post.find_by(author: params[:author], permlink: params[:permlink])
-      render_404 and return if !@post || !@post.active?
+      render_404 and return unless @post
     end
 
     def post_params
