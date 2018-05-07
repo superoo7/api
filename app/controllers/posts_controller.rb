@@ -1,7 +1,8 @@
 class PostsController < ApplicationController
-  before_action :ensure_login!, only: [:create, :update, :hide, :destroy]
-  before_action :set_post, only: [:show, :update, :refresh, :hide, :destroy]
-  before_action :check_ownership!, only: [:update, :destroy, :hide]
+  before_action :ensure_login!, only: [:create, :update, :moderate, :destroy]
+  before_action :set_post, only: [:show, :update, :refresh, :moderate, :destroy]
+  before_action :check_ownership!, only: [:update, :destroy]
+  before_action :check_admin!, only: [:moderate]
   before_action :set_sort_option, only: [:index, :author, :top]
 
   # GET /posts
@@ -118,9 +119,18 @@ class PostsController < ApplicationController
     end
   end
 
-  # PUT /hide/@:author/:permlink
-  def hide
-    if @post.update(is_active: !params[:hide])
+  # PATCH /moderate/@:author/:permlink
+  def moderate
+    if @post.update(post_moderate_params)
+      render json: { result: 'OK' }
+    else
+      render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
+    end
+  end
+
+  # PATCH /verify/@:author/:permlink
+  def verify
+    if @post.update(is_verified: params[:verify])
       render json: { result: 'OK' }
     else
       render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
@@ -170,6 +180,10 @@ class PostsController < ApplicationController
 
     def post_refresh_params
       params.require(:post).permit(:payout_value, :children, active_votes: [ :voter, :weight, :rshares, :percent, :reputation, :time ])
+    end
+
+    def post_moderate_params
+      params.require(:post).permit(:is_active, :is_verified)
     end
 
     def search_url(uri)

@@ -25,6 +25,12 @@ class ApplicationController < ActionController::API
       end
     end
 
+    def check_admin!
+      unless @current_user.admin?
+        render json: { error: 'FORBIDDEN' }, status: :forbidden
+      end
+    end
+
     def render_404
       render json: { error: 'NOT_FOUND' }, status: :not_found
     end
