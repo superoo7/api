@@ -46,8 +46,10 @@ class PostsController < ApplicationController
         to_tsvector('english', tagline) ||
         to_tsvector('english', immutable_array_to_string(tags, ' ')) as document
       FROM posts) posts
-    """).where("posts.document @@ to_tsquery('english', '#{terms.join(' & ')}') OR url LIKE '#{q}%'").
-    order('payout_value DESC').limit(50)
+    """).
+      where(is_active: true).
+      where("posts.document @@ to_tsquery('english', '#{terms.join(' & ')}') OR url LIKE '#{q}%'").
+      order('payout_value DESC').limit(50)
 
     render json: { posts: @posts.as_json(except: [:document]) }
   end
