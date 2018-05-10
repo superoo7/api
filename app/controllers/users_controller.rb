@@ -3,7 +3,9 @@ class UsersController < ApplicationController
   # POST /users.json
   def create
     if @user = User.find_by(username: user_params[:username])
-      @user.encrypted_token = user_params[:encrypted_token]
+      unless @user.validate!(user_params[:token])
+        render json: { error: 'UNAUTHORIZED' }, status: :unauthorized and return
+      end
     else
       @user = User.new(user_params)
     end
@@ -19,6 +21,6 @@ class UsersController < ApplicationController
 
   private
     def user_params
-      params.require(:user).permit(:username, :encrypted_token)
+      params.require(:user).permit(:username, :token)
     end
 end
