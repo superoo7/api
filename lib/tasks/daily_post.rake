@@ -37,7 +37,7 @@ task :daily_post => :environment do |t, args|
 
   body = "Hello hunters!\n\n" +
     "Yesterday, there were #{total_count} products, and $#{formatted_number total_generated} SBD hunter’s rewards were generated.\n\n" +
-    "# Top 10 Hunts on March 11, 2018\n" +
+    "# Top 10 Hunts on #{date}\n" +
     "Take a look at the top 10 hunted products yesterday for your daily dose of inspiration 😎\n"
 
   posts.each_with_index do |post, i|
