@@ -7,7 +7,7 @@ require 's_logger'
 #   it will deduct 0.8 * 100 * 0.02 = 1.6% vp (not 2.0%)
 #
 #   We need to fix this correctly later
-POWER_TOTAL = 1090.0
+POWER_TOTAL = 1100.0
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 500
 MAX_COMMENT_VOTING_COUNT = 200
