@@ -10,7 +10,7 @@ task :daily_post => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  date = yesterday.strftime("%b %e, %Y")
+  date = yesterday.strftime("%e %b %Y")
   title = "Daily Top 10 Hunts on Steemhunt (#{date})"
   SLogger.log "Start posting - #{title}"
 
@@ -80,7 +80,8 @@ task :daily_post => :environment do |t, args|
       image: posts.map(&:images).map(&:first).map { |i| i['link'] },
       users: posts.map(&:author),
       links: posts.map(&:url),
-      app: 'steemhunt',
+      community: 'steemhunt',
+      app: 'steemhunt/1.0.0',
       format: 'markdown'
     }.to_json
   }

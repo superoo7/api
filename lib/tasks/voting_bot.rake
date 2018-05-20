@@ -7,7 +7,7 @@ require 's_logger'
 #   it will deduct 0.8 * 100 * 0.02 = 1.6% vp (not 2.0%)
 #
 #   We need to fix this correctly later
-POWER_TOTAL = 1100.0
+POWER_TOTAL = 1095.0
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 500
 MAX_COMMENT_VOTING_COUNT = 200
@@ -89,7 +89,6 @@ def natural_distributed_array(size)
 end
 
 def vote(author, permlink, power)
-  sleep(3) # Can only vote once every 3 seconds.
   tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
   vote = {
     type: :vote,
@@ -102,6 +101,35 @@ def vote(author, permlink, power)
   with_retry(3) do
     tx.process(true)
   end
+end
+
+def comment(author, permlink, rank)
+  yesterday = Date.yesterday.strftime("%e %b %Y")
+  msg = "### Congratulation! Your hunt was ranked in #{rank.ordinalize} place on #{yesterday} on Steemhunt.\n" +
+    "We have upvoted your post for your contribution within our community.\n" +
+    "Thanks again and look forward to seeing your next hunt!\n\n" +
+    "Want to chat? Join us on:\n" +
+    "* Discord: https://discord.gg/mWXpgks\n" +
+    "* Telegram: https://t.me/joinchat/AzcqGxCV1FZ8lJHVgHOgGQ\n"
+
+  tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
+  comment = {
+    type: :comment,
+    parent_author: author,
+    parent_permlink: permlink,
+    author: 'steemhunt',
+    permlink: "re-#{permlink}-steemhunt",
+    title: '',
+    body: msg,
+    json_metadata: {
+      tags: ['steemhunt'],
+      community: 'steemhunt',
+      app: 'steemhunt/1.0.0',
+      format: 'markdown'
+    }.to_json
+  }
+  tx.operations << comment
+  tx.process(true)
 end
 
 def run_and_retry_on_exception(cmd, tries: 0, max_tries: 3, delay: 10)
@@ -152,7 +180,7 @@ task :voting_bot => :environment do |t, args|
                order('payout_value DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
 
-  logger.log "Total #{posts.size} posts found on #{yesterday.strftime("%b %e, %Y")}", true
+  logger.log "Total #{posts.size} posts found on #{yesterday.strftime("%e %b %Y")}", true
 
   api = Radiator::Api.new
   bid_bot_ids = get_bid_bot_ids
@@ -224,8 +252,11 @@ task :voting_bot => :environment do |t, args|
     if postsToSkip.include?(post.id)
       logger.log "--> SKIPPED"
     else
+      sleep(20)
       res = vote(post.author, post.permlink, voting_power)
-      logger.log "--> #{res.result.try(:id) || res.error}"
+      logger.log "--> VOTED: #{res.result.try(:id) || res.error}"
+      res = comment(post.author, post.permlink, ranking)
+      logger.log "--> COMMENTED: #{res.result.try(:id) || res.error}"
     end
   end
 
@@ -239,8 +270,9 @@ task :voting_bot => :environment do |t, args|
     if comment[:shouldSkip]
       logger.log "--> SKIPPED"
     else
+      sleep(3)
       res = vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> #{res.result.try(:id) || res}"
+      logger.log "--> VOTED: #{res.result.try(:id) || res.error}"
     end
   end
 
