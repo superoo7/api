@@ -7,7 +7,10 @@ class UsersController < ApplicationController
         render json: { error: 'UNAUTHORIZED' }, status: :unauthorized and return
       end
     else
-      @user = User.new(user_params)
+      @user = User.new(
+        username: user_params[:username],
+        encrypted_token: Digest::SHA256.hexdigest(user_params[:token])
+      )
     end
 
     @user.session_count += 1
