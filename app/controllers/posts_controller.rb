@@ -36,9 +36,12 @@ class PostsController < ApplicationController
 
 
   def search
-    query = params[:q].to_s
-    terms = query.gsub(/[^A-Za-z0-9\s]/, ' ').split
-    no_sapce = query.gsub(' ', '')
+    query = params[:q].to_s.gsub(/[^A-Za-z0-9\s]/, ' ')
+
+    render json: { posts: [] } and return if query.blank?
+
+    terms = query.split
+    no_space = query.gsub(' ', '')
 
     @posts = Post.from("""
       (SELECT *,
@@ -49,7 +52,7 @@ class PostsController < ApplicationController
       FROM posts) posts
     """).
       where(is_active: true).
-      where("posts.document @@ to_tsquery('english', '#{no_sapce} | #{terms.join(' & ')}') OR url LIKE '#{query}%'").
+      where("posts.document @@ to_tsquery('english', '#{no_space} | #{terms.join(' & ')}') OR url LIKE '#{query}%'").
       order('payout_value DESC').limit(50)
 
     render json: { posts: @posts.as_json(except: [:document]) }
