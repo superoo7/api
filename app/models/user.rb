@@ -20,9 +20,11 @@ class User < ApplicationRecord
   # Fetch user JSON data from SteemConnect
   # Only used when we need to double check current user's token
   def self.fetch_data(token)
+    retries = 0
+
     begin
       uri = URI.parse('https://v2.steemconnect.com/api/me')
-      https = Net::HTTP.new(uri.host,uri.port)
+      https = Net::HTTP.new(uri.host, uri.port)
       https.use_ssl = true
       header = {
         'Content-Type' =>'application/json',
@@ -36,6 +38,8 @@ class User < ApplicationRecord
 
       body
     rescue => e
+      retry if (retries += 1) < 3
+
       { error: e.message }
     end
   end
