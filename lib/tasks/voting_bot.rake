@@ -7,7 +7,7 @@ require 's_logger'
 #   it will deduct 0.8 * 100 * 0.02 = 1.6% vp (not 2.0%)
 #
 #   We need to fix this correctly later
-POWER_TOTAL = 1095.0
+POWER_TOTAL = 1080.0
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 500
 MAX_COMMENT_VOTING_COUNT = 200
@@ -186,22 +186,31 @@ task :voting_bot => :environment do |t, args|
   bid_bot_ids = get_bid_bot_ids
   prosCons = []
   postsToSkip = []
-  commentsToSkip = []
+  postsToRemove = []
   posts.each_with_index do |post, i|
     logger.log "@#{post.author}/#{post.permlink}"
+
+    unless post.is_verified
+      postsToRemove << post.id
+      post.update! created_at: Time.now # pass it over to the next date
+      logger.log "--> REMOVE: Not yet verified"
+      next
+    end
+
     votes = with_retry(3) do
       api.get_content(post.author, post.permlink)['result']['active_votes']
     end
+
     # logger.log "----> #{votes.size} active votes returned"
     votes.each do |vote|
       if vote['voter'] == 'steemhunt'
         postsToSkip << post.id
         logger.log "--> SKIP: Already voted"
-      end
-
-      if bid_bot_ids.include?(vote['voter'])
-        postsToSkip << post.id
-        logger.log "--> SKIP: Bitbot use detected: #{vote['voter']}"
+        break # inner loop only
+      elsif bid_bot_ids.include?(vote['voter'])
+        postsToRemove << post.id
+        logger.log "--> REMOVE: Bitbot use detected: #{vote['voter']}"
+        break # inner loop only
       end
     end
 
@@ -220,6 +229,7 @@ task :voting_bot => :environment do |t, args|
           if vote['voter'] == 'steemhunt'
             shouldSkip = true
             logger.log "--> SKIP: Already voted review comment: @#{comment['author']}/#{comment['permlink']}"
+            break # inner loop only
           end
         end
 
@@ -233,7 +243,8 @@ task :voting_bot => :environment do |t, args|
       break
     end
   end
-  logger.log "Total #{prosCons.size} Review comments found\n\n", true
+
+  posts = posts.to_a.reject { |post| postsToRemove.include?(post.id) }
 
   logger.log "== VOTING ON #{posts.size} POSTS & #{prosCons.size} COMMENTS ==", true
 
