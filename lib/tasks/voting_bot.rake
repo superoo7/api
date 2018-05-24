@@ -7,7 +7,8 @@ require 's_logger'
 #   it will deduct 0.8 * 100 * 0.02 = 1.6% vp (not 2.0%)
 #
 #   We need to fix this correctly later
-POWER_TOTAL = 1080.0
+POWER_TOTAL = 1000.0
+POWER_TOTAL_COMMENT = 80.0
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 500
 MAX_COMMENT_VOTING_COUNT = 200
@@ -246,18 +247,14 @@ task :voting_bot => :environment do |t, args|
 
   posts = posts.to_a.reject { |post| postsToRemove.include?(post.id) }
 
-  logger.log "== VOTING ON #{posts.size} POSTS & #{prosCons.size} COMMENTS ==", true
+  logger.log "== VOTING ON #{posts.size} POSTS ==", true
 
-  total_count = posts.size + prosCons.size
-  logger.log "No posts, exit" and return if total_count == 0
+  logger.log("No posts, exit", true) and return if posts.size == 0
 
-  total_vp_used = 0
-  vp_distribution = natural_distributed_array(total_count)
-
+  vp_distribution = natural_distributed_array(posts.size)
   posts.each_with_index do |post, i|
     ranking = i + 1
     voting_power = vp_distribution[ranking - 1]
-    total_vp_used += voting_power
 
     logger.log "Voting on ##{ranking} with #{voting_power}% power: @#{post.author}/#{post.permlink}"
     if postsToSkip.include?(post.id)
@@ -271,13 +268,12 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
+  logger.log "== VOTING ON #{prosCons.size} COMMENTS =="
+
+  voting_power = (POWER_TOTAL_COMMENT / prosCons.size).round(2)
+  voting_power = 100.0 if voting_power > 100
   prosCons.each_with_index do |comment, i|
-    ranking = posts.size + i + 1
-    voting_power = vp_distribution[ranking - 1]
-    total_vp_used += voting_power
-
-    logger.log "Voting on ##{ranking} (Review) with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
-
+    logger.log "Voting on review comment with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
     if comment[:shouldSkip]
       logger.log "--> SKIPPED"
     else
