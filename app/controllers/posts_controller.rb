@@ -193,7 +193,11 @@ class PostsController < ApplicationController
     end
 
     def search_url(uri)
-      parsed = URI.parse(uri)
+      begin
+        parsed = URI.parse(uri)
+      rescue URI::InvalidURIError
+        return nil
+      end
 
       return nil if parsed.host.blank? || !['http', 'https'].include?(parsed.scheme)
 
