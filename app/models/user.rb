@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   validates_presence_of :username, :encrypted_token
+  has_many :hunt_transactions
 
   ADMIN_ACCOUNTS = ['steemhunt', 'tabris', 'project7']
   MODERATOR_ACCOUNTS = [

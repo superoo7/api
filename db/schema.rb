@@ -15,6 +15,15 @@ ActiveRecord::Schema.define(version: 2018_05_24_161336) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
+  create_table "hunt_transactions", force: :cascade do |t|
+    t.bigint "sender_id_id", null: false
+    t.bigint "receiver_id_id", null: false
+    t.decimal "amount", null: false
+    t.string "memo"
+    t.index ["receiver_id_id"], name: "index_hunt_transactions_on_receiver_id_id"
+    t.index ["sender_id_id"], name: "index_hunt_transactions_on_sender_id_id"
+  end
+
   create_table "posts", force: :cascade do |t|
     t.string "author", null: false
     t.string "url", null: false
@@ -46,6 +55,8 @@ ActiveRecord::Schema.define(version: 2018_05_24_161336) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "session_count", default: 0
+    t.decimal "hunt_balance", default: "0.0"
+    t.string "eth_address", limit: 42
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
