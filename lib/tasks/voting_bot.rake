@@ -266,7 +266,7 @@ task :voting_bot => :environment do |t, args|
 
   posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
 
-  logger.log "== VOTING ON #{posts.size} POSTS ==", true
+  logger.log "\n\n== VOTING ON #{posts.size} POSTS ==", true
 
   vp_distribution = natural_distributed_array(posts.size)
   posts.each_with_index do |post, i|
@@ -285,7 +285,7 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  logger.log "== VOTING ON #{review_comments.size} REVIEW COMMENTS =="
+  logger.log "\n\n== VOTING ON #{review_comments.size} REVIEW COMMENTS =="
 
   voting_power = (POWER_TOTAL_COMMENT / review_comments.size).round(2)
   voting_power = 100.0 if voting_power > 100
@@ -300,7 +300,7 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  logger.log "== VOTING ON #{moderators_comments.size} MODERATOR COMMENTS =="
+  logger.log "\n\n== VOTING ON #{moderators_comments.size} MODERATOR COMMENTS =="
 
   voting_power = (POWER_TOTAL_MODERATOR / moderators_comments.size).round(2)
   voting_power = 100.0 if voting_power > 100
