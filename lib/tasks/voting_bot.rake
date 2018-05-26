@@ -7,9 +7,9 @@ require 's_logger'
 #   it will deduct 0.8 * 100 * 0.02 = 1.6% vp (not 2.0%)
 #
 #   We need to fix this correctly later
-POWER_TOTAL = 880.0
-POWER_TOTAL_COMMENT = 100.0
-POWER_TOTAL_MODERATOR = 10.0 # TODO: increase it to  100.0
+POWER_TOTAL = 856.0
+POWER_TOTAL_COMMENT = 107.0
+POWER_TOTAL_MODERATOR = 107.0 # TODO: increase it to  100.0
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 1000
 

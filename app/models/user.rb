@@ -2,7 +2,10 @@ class User < ApplicationRecord
   validates_presence_of :username, :encrypted_token
 
   ADMIN_ACCOUNTS = ['steemhunt', 'tabris', 'project7']
-  MODERATOR_ACCOUNTS = ['steemhunt', 'tabris', 'project7']
+  MODERATOR_ACCOUNTS = [
+    'tabris', 'project7',
+    'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem'
+  ]
 
   def admin?
     ADMIN_ACCOUNTS.include?(username)
