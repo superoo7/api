@@ -8,7 +8,7 @@ require 's_logger'
 #
 #   We need to fix this correctly later
 POWER_TOTAL = 880.0
-POWER_TOTAL_COMMENT = 80.0 # TODO: increase it to 100
+POWER_TOTAL_COMMENT = 100.0
 POWER_TOTAL_MODERATOR = 10.0 # TODO: increase it to  100.0
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 1000
@@ -250,10 +250,13 @@ task :voting_bot => :environment do |t, args|
       # 2. Moderator comments
       json_metadata = JSON.parse(comment['json_metadata']) rescue {}
       unless json_metadata['verified_by'].blank?
-        should_skip = comment_already_voted?(comment, api)
-
-        moderators_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
-        logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Moderator comment: @#{comment['author']}/#{comment['permlink']}"
+        if  User::MODERATOR_ACCOUNTS.include?(comment['author'])
+          should_skip = comment_already_voted?(comment, api)
+          moderators_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
+          logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Moderator comment: @#{comment['author']}/#{comment['permlink']}"
+        else
+          logger.log "--> WTF!!!!! Moderator comment: @#{comment['author']}/#{comment['permlink']}"
+        end
       end
     end # comments.each
   end # posts.each
