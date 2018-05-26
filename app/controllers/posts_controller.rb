@@ -1,8 +1,8 @@
 class PostsController < ApplicationController
-  before_action :ensure_login!, only: [:create, :update, :moderate, :destroy]
-  before_action :set_post, only: [:show, :update, :refresh, :moderate, :destroy]
+  before_action :ensure_login!, only: [:create, :update, :moderate, :set_moderator, :destroy]
+  before_action :set_post, only: [:show, :update, :refresh, :moderate, :set_moderator, :destroy]
   before_action :check_ownership!, only: [:update, :destroy]
-  before_action :check_admin!, only: [:moderate]
+  before_action :check_moderator!, only: [:moderate, :set_moderator]
   before_action :set_sort_option, only: [:index, :author, :top]
 
   # GET /posts
@@ -14,9 +14,15 @@ class PostsController < ApplicationController
       Post.where('created_at >= ? AND created_at < ?', today - days_ago.days, today - (days_ago - 1).days)
     else
       Post.where('created_at >= ?', today)
-    end.where(is_active: true).order(@sort)
+    end
 
-    render json: @posts
+    if params[:sort] == 'unverified'
+      @posts = @posts.where(is_verified: false)
+    else
+      @posts = @posts.where(is_active: true)
+    end
+
+    render json: @posts.order(@sort)
   end
 
   def top
@@ -125,25 +131,35 @@ class PostsController < ApplicationController
     end
   end
 
-  # PATCH /moderate/@:author/:permlink
-  def moderate
-    if @post.update(post_moderate_params)
-      render json: { result: 'OK' }
-    else
-      render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
+  # PATCH /set_moderator/@:author/:permlink
+  def set_moderator
+    if @post.author == @current_user.username
+      render json: { error: 'You cannot review your own content' }, status: :forbidden and return
     end
+
+    if @post.verified_by.blank?
+      @post.update!(verified_by: @current_user.username)
+    end
+
+    render_moderator_fields
   end
 
-  # PATCH /verify/@:author/:permlink
-  def verify
-    if @post.update(is_verified: params[:verify])
-      render json: { result: 'OK' }
+  # PATCH /moderate/@:author/:permlink
+  def moderate
+    if @post.verified_by != @current_user.username
+      render json: { error: "This product is in review by #{@post.verified_by}" }, status: :forbidden
+    elsif @post.update!(post_moderate_params)
+      render_moderator_fields
     else
       render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
     end
   end
 
   private
+    def render_moderator_fields
+      render json: @post.as_json(only: [:is_active, :is_verified, :verified_by])
+    end
+
     def render_pages
       page = params[:page].to_i
       page = 1 if page < 1

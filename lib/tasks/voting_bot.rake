@@ -7,11 +7,11 @@ require 's_logger'
 #   it will deduct 0.8 * 100 * 0.02 = 1.6% vp (not 2.0%)
 #
 #   We need to fix this correctly later
-POWER_TOTAL = 1000.0
-POWER_TOTAL_COMMENT = 80.0
+POWER_TOTAL = 880.0
+POWER_TOTAL_COMMENT = 80.0 # TODO: increase it to 100
+POWER_TOTAL_MODERATOR = 10.0 # TODO: increase it to  100.0
 POWER_MAX = 100.0
-MAX_POST_VOTING_COUNT = 500
-MAX_COMMENT_VOTING_COUNT = 200
+MAX_POST_VOTING_COUNT = 1000
 
 def get_minimum_power(size)
   minimum = if size < 20
@@ -168,6 +168,20 @@ def get_bid_bot_ids
   []
 end
 
+def comment_already_voted?(comment, api)
+  votes = with_retry(3) do
+    api.get_content(comment['author'], comment['permlink'])['result']['active_votes']
+  end
+
+  votes.each do |vote|
+    if vote['voter'] == 'steemhunt'
+      return true
+    end
+  end
+
+  return false
+end
+
 desc 'Voting bot'
 task :voting_bot => :environment do |t, args|
   today = Time.zone.today.to_time
@@ -177,7 +191,6 @@ task :voting_bot => :environment do |t, args|
 
   logger.log "Voting on daily post begin"
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
-               where(is_active: true).
                order('payout_value DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
 
@@ -185,34 +198,40 @@ task :voting_bot => :environment do |t, args|
 
   api = Radiator::Api.new
   bid_bot_ids = get_bid_bot_ids
-  prosCons = []
-  postsToSkip = []
-  postsToRemove = []
+  review_comments = []
+  moderators_comments =  []
+  posts_to_skip = []
+  posts_to_remove = []
   posts.each_with_index do |post, i|
     logger.log "@#{post.author}/#{post.permlink}"
 
     unless post.is_verified
-      postsToRemove << post.id
+      posts_to_remove << post.id
       post.update! created_at: Time.now # pass it over to the next date
       logger.log "--> REMOVE: Not yet verified"
       next
     end
 
-    votes = with_retry(3) do
-      api.get_content(post.author, post.permlink)['result']['active_votes']
-    end
-
-    # logger.log "----> #{votes.size} active votes returned"
-    votes.each do |vote|
-      if vote['voter'] == 'steemhunt'
-        postsToSkip << post.id
-        logger.log "--> SKIP: Already voted"
-        break # inner loop only
-      elsif bid_bot_ids.include?(vote['voter'])
-        postsToRemove << post.id
-        logger.log "--> REMOVE: Bitbot use detected: #{vote['voter']}"
-        break # inner loop only
+    if post.is_active
+      votes = with_retry(3) do
+        api.get_content(post.author, post.permlink)['result']['active_votes']
       end
+
+      # logger.log "----> #{votes.size} active votes returned"
+      votes.each do |vote|
+        if vote['voter'] == 'steemhunt'
+          posts_to_skip << post.id
+          logger.log "--> SKIP: Already voted"
+          break # inner loop only
+        elsif bid_bot_ids.include?(vote['voter'])
+          posts_to_remove << post.id
+          logger.log "--> REMOVE: Bitbot use detected: #{vote['voter']}"
+          break # inner loop only
+        end
+      end
+    else
+      posts_to_remove << post.id
+      logger.log "--> HIDDEN: still checks comments for moderators and review comments"
     end
 
     comments = with_retry(3) do
@@ -220,66 +239,73 @@ task :voting_bot => :environment do |t, args|
     end
     # logger.log "----> #{comments.size} comments returned"
     comments.each do |comment|
+      # 1. Review comments
       if comment['body'] =~ /pros\s*:/i && comment['body'] =~ /cons\s*:/i
-        votes = with_retry(3) do
-          api.get_content(comment['author'], comment['permlink'])['result']['active_votes']
-        end
+        should_skip = comment_already_voted?(comment, api)
 
-        shouldSkip = false
-        votes.each do |vote|
-          if vote['voter'] == 'steemhunt'
-            shouldSkip = true
-            logger.log "--> SKIP: Already voted review comment: @#{comment['author']}/#{comment['permlink']}"
-            break # inner loop only
-          end
-        end
-
-        prosCons.push({ author: comment['author'], permlink: comment['permlink'], shouldSkip: shouldSkip })
-        logger.log "--> Review comment found: @#{comment['author']}/#{comment['permlink']}"
+        review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
+        logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Review comment: @#{comment['author']}/#{comment['permlink']}"
       end
-    end
 
-    if prosCons.size >= MAX_COMMENT_VOTING_COUNT
-      logger.log "--> TOO MANY COMMENTS. BREAK"
-      break
-    end
-  end
+      # 2. Moderator comments
+      json_metadata = JSON.parse(comment['json_metadata']) rescue {}
+      unless json_metadata['verified_by'].blank?
+        should_skip = comment_already_voted?(comment, api)
 
-  posts = posts.to_a.reject { |post| postsToRemove.include?(post.id) }
+        moderators_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
+        logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Moderator comment: @#{comment['author']}/#{comment['permlink']}"
+      end
+    end # comments.each
+  end # posts.each
+
+  posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
 
   logger.log "== VOTING ON #{posts.size} POSTS ==", true
-
-  logger.log("No posts, exit", true) and return if posts.size == 0
 
   vp_distribution = natural_distributed_array(posts.size)
   posts.each_with_index do |post, i|
     ranking = i + 1
     voting_power = vp_distribution[ranking - 1]
 
-    logger.log "Voting on ##{ranking} with #{voting_power}% power: @#{post.author}/#{post.permlink}"
-    if postsToSkip.include?(post.id)
-      logger.log "--> SKIPPED"
+    logger.log "Voting on ##{ranking} (#{voting_power}%): @#{post.author}/#{post.permlink}"
+    if posts_to_skip.include?(post.id)
+      logger.log "--> SKIPPED_POST"
     else
       sleep(20)
       res = vote(post.author, post.permlink, voting_power)
-      logger.log "--> VOTED: #{res.result.try(:id) || res.error}"
+      logger.log "--> VOTED_POST: #{res.result.try(:id) || res.error}"
       res = comment(post.author, post.permlink, ranking)
       logger.log "--> COMMENTED: #{res.result.try(:id) || res.error}"
     end
   end
 
-  logger.log "== VOTING ON #{prosCons.size} COMMENTS =="
+  logger.log "== VOTING ON #{review_comments.size} REVIEW COMMENTS =="
 
-  voting_power = (POWER_TOTAL_COMMENT / prosCons.size).round(2)
+  voting_power = (POWER_TOTAL_COMMENT / review_comments.size).round(2)
   voting_power = 100.0 if voting_power > 100
-  prosCons.each_with_index do |comment, i|
-    logger.log "Voting on review comment with #{voting_power}% power: @#{comment[:author]}/#{comment[:permlink]}"
-    if comment[:shouldSkip]
-      logger.log "--> SKIPPED"
+  review_comments.each do |comment|
+    logger.log "Voting on review comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}"
+    if comment[:should_skip]
+      logger.log "--> SKIPPED_REVIEW"
     else
       sleep(3)
       res = vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> VOTED: #{res.result.try(:id) || res.error}"
+      logger.log "--> VOTED_REVIEW: #{res.result.try(:id) || res.error}"
+    end
+  end
+
+  logger.log "== VOTING ON #{moderators_comments.size} MODERATOR COMMENTS =="
+
+  voting_power = (POWER_TOTAL_MODERATOR / moderators_comments.size).round(2)
+  voting_power = 100.0 if voting_power > 100
+  moderators_comments.each do |comment|
+    logger.log "Voting on moderator comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}"
+    if comment[:should_skip]
+      logger.log "--> SKIPPED_MODERATOR"
+    else
+      sleep(3)
+      res = vote(comment[:author], comment[:permlink], voting_power)
+      logger.log "--> VOTED_MODERATOR: #{res.result.try(:id) || res.error}"
     end
   end
 

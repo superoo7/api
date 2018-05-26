@@ -9,7 +9,10 @@ class SLogger
 
   # Stack up logs and send in a bulk to avoid Discord rate limit
   def log(text, flush = false)
-    puts text and return unless Rails.env.production?
+    unless Rails.env.production?
+      puts text
+      return
+    end
 
     @stack += "#{text}\n"
 
@@ -20,7 +23,10 @@ class SLogger
   end
 
   def self.log(text)
-    puts text and return unless Rails.env.production?
+    unless Rails.env.production?
+      puts text
+      return
+    end
 
     Discord.send(text)
   end

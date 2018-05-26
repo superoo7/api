@@ -5,6 +5,10 @@ class User < ApplicationRecord
     ['steemhunt', 'tabris', 'project7'].include?(username)
   end
 
+  def moderator?
+    ['steemhunt', 'tabris', 'project7'].include?(username)
+  end
+
   def validate!(token)
     res = User.fetch_data(token)
 
