@@ -239,23 +239,26 @@ task :voting_bot => :environment do |t, args|
     end
     # logger.log "----> #{comments.size} comments returned"
     comments.each do |comment|
-      # 1. Review comments
-      if comment['body'] =~ /pros\s*:/i && comment['body'] =~ /cons\s*:/i
+      json_metadata = JSON.parse(comment['json_metadata']) rescue {}
+
+      is_review = comment['body'] =~ /pros\s*:/i && comment['body'] =~ /cons\s*:/i
+      is_moderator = !json_metadata['verified_by'].blank?
+
+      if is_review || is_moderator
         should_skip = comment_already_voted?(comment, api)
 
-        review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
-        logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Review comment: @#{comment['author']}/#{comment['permlink']}"
-      end
-
-      # 2. Moderator comments
-      json_metadata = JSON.parse(comment['json_metadata']) rescue {}
-      unless json_metadata['verified_by'].blank?
-        if  User::MODERATOR_ACCOUNTS.include?(comment['author'])
-          should_skip = comment_already_voted?(comment, api)
-          moderators_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
-          logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Moderator comment: @#{comment['author']}/#{comment['permlink']}"
-        else
-          logger.log "--> WTF!!!!! Moderator comment: @#{comment['author']}/#{comment['permlink']}"
+        # 1. Moderator comments
+        if is_moderator
+          if  User::MODERATOR_ACCOUNTS.include?(comment['author'])
+            moderators_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
+            logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Moderator comment: @#{comment['author']}/#{comment['permlink']}"
+          else
+            logger.log "--> WTF!!!!! Moderator comment: @#{comment['author']}/#{comment['permlink']}"
+          end
+        # 2. Review comments
+        elsif is_review
+          review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
+          logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Review comment: @#{comment['author']}/#{comment['permlink']}"
         end
       end
     end # comments.each
