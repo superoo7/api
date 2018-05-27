@@ -67,13 +67,16 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
 
         if should_write
           HuntTransaction.reward_sponsor! j['delegator'], hunt, week
-          steem_transactions << {
-            type: :transfer,
-            from: 'steemhunt.pay',
-            to: j['delegator'],
-            amount: "#{steem.round(3)} STEEM",
-            memo: 'Steemhunt weekly reward from the sponsor program'
-          }
+
+          if steem > 0.001
+            steem_transactions << {
+              type: :transfer,
+              from: 'steemhunt.pay',
+              to: j['delegator'],
+              amount: "#{steem.round(3)} STEEM",
+              memo: 'Steemhunt weekly reward from the sponsor program'
+            }
+          end
         end
 
         hunt_balance = User.find_by(username: j['delegator']).try(:hunt_balance).to_f
@@ -90,14 +93,14 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
         "#{(total_proportion * 100).round(2)}% | #{formatted_number(total_steem_distributed, 3)} | " +
         "#{formatted_number(total_hunt_distributed, 0)} | #{formatted_number(total_hunt_accumulated, 0)} |"
 
-  logger.log "\n== SEND #{formatted_number(total_steem_distributed)} STEEM TO #{steem_transactions.size} SPONSORS ==", true
+  logger.log "\n== SEND #{formatted_number(total_steem_distributed)} STEEM TO #{steem_transactions.size} SPONSORS (#{json.size - steem_transactions.size} omitted less than 0.001) ==", true
 
   if should_write
     tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_PAY_ACTIVE_KEY'])
     tx.operations = steem_transactions
-    result = tx.process(false)
+    result = tx.process(true)
 
-    puts "Sent: #{result}"
+    logger.log "Sent: #{result}", true
   end
 end
 
