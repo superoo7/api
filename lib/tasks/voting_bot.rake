@@ -273,45 +273,45 @@ task :voting_bot => :environment do |t, args|
     ranking = i + 1
     voting_power = vp_distribution[ranking - 1]
 
-    logger.log "Voting on ##{ranking} (#{voting_power}%): @#{post.author}/#{post.permlink}"
+    logger.log "Voting on ##{ranking} (#{voting_power}%): @#{post.author}/#{post.permlink}", true
     if posts_to_skip.include?(post.id)
-      logger.log "--> SKIPPED_POST"
+      logger.log "--> SKIPPED_POST", true
     else
       sleep(20)
       res = vote(post.author, post.permlink, voting_power)
-      logger.log "--> VOTED_POST: #{res.result.try(:id) || res.error}"
+      logger.log "--> VOTED_POST: #{res.result.try(:id) || res.error}", true
       res = comment(post.author, post.permlink, ranking)
-      logger.log "--> COMMENTED: #{res.result.try(:id) || res.error}"
+      logger.log "--> COMMENTED: #{res.result.try(:id) || res.error}", true
     end
   end
 
-  logger.log "\n\n== VOTING ON #{review_comments.size} REVIEW COMMENTS =="
+  logger.log "\n\n== VOTING ON #{review_comments.size} REVIEW COMMENTS ==", true
 
   voting_power = (POWER_TOTAL_COMMENT / review_comments.size).round(2)
   voting_power = 100.0 if voting_power > 100
   review_comments.each do |comment|
-    logger.log "Voting on review comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}"
+    logger.log "Voting on review comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}", true
     if comment[:should_skip]
-      logger.log "--> SKIPPED_REVIEW"
+      logger.log "--> SKIPPED_REVIEW", true
     else
       sleep(3)
       res = vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> VOTED_REVIEW: #{res.result.try(:id) || res.error}"
+      logger.log "--> VOTED_REVIEW: #{res.result.try(:id) || res.error}", true
     end
   end
 
-  logger.log "\n\n== VOTING ON #{moderators_comments.size} MODERATOR COMMENTS =="
+  logger.log "\n\n== VOTING ON #{moderators_comments.size} MODERATOR COMMENTS ==", true
 
   voting_power = (POWER_TOTAL_MODERATOR / moderators_comments.size).round(2)
   voting_power = 100.0 if voting_power > 100
   moderators_comments.each do |comment|
-    logger.log "Voting on moderator comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}"
+    logger.log "Voting on moderator comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}", true
     if comment[:should_skip]
-      logger.log "--> SKIPPED_MODERATOR"
+      logger.log "--> SKIPPED_MODERATOR", true
     else
       sleep(3)
       res = vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> VOTED_MODERATOR: #{res.result.try(:id) || res.error}"
+      logger.log "--> VOTED_MODERATOR: #{res.result.try(:id) || res.error}", true
     end
   end
 
