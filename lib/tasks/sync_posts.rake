@@ -13,7 +13,7 @@ task :sync_posts, [:days] => :environment do |t, args|
   posts = Post.where('created_at >= ? AND created_at < ?', day_end, day_start).
                where(is_active: true)
 
-  logger.log "UPDATES #{posts.count} POSTS", true
+  logger.log "\n== UPDATES #{posts.count} POSTS ON DAY #{days} ==", true
 
   api = Radiator::Api.new
   diff = 0
