@@ -1,5 +1,10 @@
 class User < ApplicationRecord
-  validates_presence_of :username, :encrypted_token
+  has_many :sent_transactions, class_name: 'HuntTransaction', foreign_key: 'sender_id'
+  has_many :received_transactions, class_name: 'HuntTransaction', foreign_key: 'recipient_id'
+
+  validates_presence_of :username
+  validate :validate_eth_format
+  has_many :hunt_transactions
 
   ADMIN_ACCOUNTS = ['steemhunt', 'tabris', 'project7']
   MODERATOR_ACCOUNTS = [
@@ -24,6 +29,12 @@ class User < ApplicationRecord
       true
     else
       false
+    end
+  end
+
+  def validate_eth_format
+    unless eth_address.blank?
+      errors.add(:eth_address, "Wrong format") if eth_address.size != 42 || !eth_address.downcase.start_with?('0x')
     end
   end
 
