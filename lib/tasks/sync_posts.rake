@@ -18,16 +18,16 @@ task :sync_posts, [:days] => :environment do |t, args|
   api = Radiator::Api.new
   diff = 0
   posts.each do |post|
-    logger.log "@#{post.author}/#{post.permlink}"
+    # logger.log "@#{post.author}/#{post.permlink}"
     old_votes = post.active_votes.size
     old_payout = post.payout_value
     old_comments = post.children
     post.sync! api.get_content(post.author, post.permlink)['result']
 
     diff += post.payout_value - old_payout
-    logger.log "--> Payout: #{old_payout.round(2)} -> #{post.payout_value.round(2)}" if diff.abs > 0.1
-    logger.log "--> Likes: #{old_votes} -> #{post.active_votes.size}" if post.active_votes.size != old_votes
-    logger.log "--> Comments: #{old_comments} -> #{post.children}" if post.children != old_comments
+    # logger.log "--> Payout: #{old_payout.round(2)} -> #{post.payout_value.round(2)}" if diff.abs > 0.1
+    # logger.log "--> Likes: #{old_votes} -> #{post.active_votes.size}" if post.active_votes.size != old_votes
+    # logger.log "--> Comments: #{old_comments} -> #{post.children}" if post.children != old_comments
   end
 
   logger.log "Finished with diff: + $#{diff.round(2)} SBD", true
