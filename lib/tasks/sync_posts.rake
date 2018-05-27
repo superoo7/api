@@ -2,14 +2,15 @@ require 'radiator'
 require 's_logger'
 
 desc 'Synchronize posts'
-task :sync_posts => :environment do |t, args|
-  logger = SLogger.new
-  today = Time.zone.today.to_time
-  yesterday = (today - 1.day).to_time
-  week_ago_1 = (today - 8.days).to_time # take care of timezone difference
-  week_ago_2 = (today - 9.days).to_time
+task :sync_posts, [:days] => :environment do |t, args|
+  days = args[:days].to_i
 
-  posts = Post.where('(created_at >= ? AND created_at < ?) OR (created_at >= ? AND created_at < ?)', yesterday, today, week_ago_2, week_ago_1).
+  logger = SLogger.new
+  today = Time.zone.today.to_time + 1.day
+  day_start = (today - (days).day).to_time
+  day_end = (today - (days + 1).day).to_time
+
+  posts = Post.where('created_at >= ? AND created_at < ?', day_end, day_start).
                where(is_active: true)
 
   logger.log "UPDATES #{posts.count} POSTS", true
