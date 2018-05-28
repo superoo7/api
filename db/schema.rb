@@ -22,7 +22,7 @@ ActiveRecord::Schema.define(version: 2018_05_28_093943) do
     t.string "eth_tx_hash", limit: 66
     t.decimal "amount", null: false
     t.string "memo"
-    t.datetime "created_at", default: "2018-05-28 09:40:51", null: false
+    t.datetime "created_at", default: "2018-05-20 15:00:00", null: false
     t.index ["receiver_id"], name: "index_hunt_transactions_on_receiver_id"
     t.index ["sender_id"], name: "index_hunt_transactions_on_sender_id"
   end
