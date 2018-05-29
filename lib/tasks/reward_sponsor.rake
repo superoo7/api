@@ -96,11 +96,12 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
   logger.log "\n== SEND #{formatted_number(total_steem_distributed)} STEEM TO #{steem_transactions.size} SPONSORS (#{json.size - steem_transactions.size} omitted less than 0.001) ==", true
 
   if should_write
-    tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_PAY_ACTIVE_KEY'])
-    tx.operations = steem_transactions
-    result = tx.process(true)
-
-    logger.log "Sent: #{result}", true
+    steem_transactions.each do |t|
+      tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_PAY_ACTIVE_KEY'])
+      tx.operations << t
+      result = tx.process(true)
+      logger.log "Sent to #{t[:to]} - #{t[:amount]} STEEM: #{result.try(:id)}", true
+    end
   end
 end
 

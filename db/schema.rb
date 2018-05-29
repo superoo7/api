@@ -10,21 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_05_28_093943) do
+ActiveRecord::Schema.define(version: 2018_05_29_081029) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "hunt_transactions", force: :cascade do |t|
-    t.bigint "sender_id", null: false
-    t.bigint "receiver_id"
     t.string "eth_address", limit: 42
     t.string "eth_tx_hash", limit: 66
     t.decimal "amount", null: false
     t.string "memo"
     t.datetime "created_at", default: "2018-05-20 15:00:00", null: false
-    t.index ["receiver_id"], name: "index_hunt_transactions_on_receiver_id"
-    t.index ["sender_id"], name: "index_hunt_transactions_on_sender_id"
+    t.string "sender"
+    t.string "receiver"
+    t.index ["receiver"], name: "index_hunt_transactions_on_receiver"
+    t.index ["sender"], name: "index_hunt_transactions_on_sender"
   end
 
   create_table "posts", force: :cascade do |t|

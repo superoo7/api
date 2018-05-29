@@ -16,6 +16,8 @@ Rails.application.routes.draw do
 
   resources :users, only: [:create]
 
+  resources :hunt_transactions, only: [:index]
+
   get '*foo', to: lambda { |env| [404, {}, [ '{"error": "NOT_FOUND"}' ]] }
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 end
