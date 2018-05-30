@@ -201,7 +201,10 @@ task :voting_bot => :environment do |t, args|
   moderators_comments =  []
   posts_to_skip = [] # posts that should skip votings, but need to be counted for VP
   posts_to_remove = [] # posts  that should be removed from the ranking entirely (not counted for VP)
-  rshares = {}
+
+  # For voting / resteem contributions
+  rshares_by_users = {}
+  has_resteemed = {}
   posts.each_with_index do |post, i|
     logger.log "@#{post.author}/#{post.permlink}"
 
@@ -217,18 +220,26 @@ task :voting_bot => :environment do |t, args|
         api.get_content(post.author, post.permlink)['result']['active_votes']
       end
 
-      # logger.log "----> #{votes.size} active votes returned"
+      logger.log "--> VOTE COUNT: #{votes.size}"
       votes.each do |vote|
         if vote['voter'] == 'steemhunt'
           posts_to_skip << post.id
           logger.log "--> SKIP: Already voted"
         elsif !bid_bot_ids.include?(vote['voter'])
-          if rshares[vote['voter']]
-            rshares[vote['voter']] += vote['rshares'].to_i
+          if rshares_by_users[vote['voter']]
+            rshares_by_users[vote['voter']] += vote['rshares'].to_i
           else
-            rshares[vote['voter']] = vote['rshares'].to_i
+            rshares_by_users[vote['voter']] = vote['rshares'].to_i
           end
         end
+      end
+
+      resteemed_by = with_retry(3) do
+        api.get_reblogged_by(post.author, post.permlink)['result']
+      end
+      logger.log "--> RESTEEM COUNT: #{resteemed_by.size}"
+      resteemed_by.each do |username|
+        has_resteemed[username] = true unless has_resteemed[username]
       end
     else
       posts_to_remove << post.id
@@ -265,12 +276,12 @@ task :voting_bot => :environment do |t, args|
     end # comments.each
   end # posts.each
 
-  total_rshares = rshares.values.sum.to_f
-  rshares = rshares.sort_by {|k,v| v}.reverse
+  # 1. HUNT voting distribution
+  total_rshares = rshares_by_users.values.sum.to_f
+  rshares_by_users = rshares_by_users.sort_by {|k,v| v}.reverse
+  logger.log "\n==\n========== HUNT DISTRIBUTION ON #{rshares_by_users.size} VOTINGS ==========\n==", true
 
-  logger.log "\n==\n========== HUNT DISTRIBUTION ON #{rshares.count} VOTINGS ==========\n==", true
-
-  rshares.each do |pair|
+  rshares_by_users.each do |pair|
     username = pair[0]
     proportion = pair[1] / total_rshares
     hunt_amount = HUNT_DISTRIBUTION_VOTE * proportion
@@ -279,9 +290,15 @@ task :voting_bot => :environment do |t, args|
     logger.log "@#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(2)}%"
   end
 
-  # TODO: Resteem distribution            
-  next
+  # 2. HUNT resteem distribution
+  resteemed_users = has_resteemed.keys
+  hunt_per_resteem = HUNT_DISTRIBUTION_RESTEEM / resteemed_users.size
+  logger.log "\n==\n========== HUNT DISTRIBUTION ON #{resteemed_users.size} RESTEEMS ==========\n==", true
 
+  resteemed_users.each do |username|
+    HuntTransaction.reward_resteems!(username, hunt_per_resteem, yesterday) unless TEST_MODE
+  end
+  logger.log "Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users"
 
   posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
 

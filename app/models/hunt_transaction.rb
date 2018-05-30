@@ -7,6 +7,7 @@ class HuntTransaction < ApplicationRecord
 
   SPONSOR_REWARD_MEMO_PREFIX = 'Weekly reward for delegation sponsor - week ' # + num
   VOTING_REWARD_MEMO_PREFIX = 'Daily reward for voting contribution - ' # + formatted date (%e %b %Y)
+  RESTEEM_REWARD_MEMO_PREFIX = 'Daily reward for resteem contribution - ' # + formatted date (%e %b %Y)
 
   def validate_sender_and_receiver
     if sender.blank? && receiver.blank?
@@ -38,6 +39,10 @@ class HuntTransaction < ApplicationRecord
 
   def self.reward_votings!(username, amount, date)
     self.reward_user!(username, amount, "#{HuntTransaction::VOTING_REWARD_MEMO_PREFIX}#{formatted_date(date)}")
+  end
+
+  def self.reward_resteems!(username, amount, date)
+    self.reward_user!(username, amount, "#{HuntTransaction::RESTEEM_REWARD_MEMO_PREFIX}#{formatted_date(date)}")
   end
 
   def self.reward_sponsor!(username, amount, week)
