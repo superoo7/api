@@ -21,7 +21,7 @@ def current_voting_power(api = Radiator::Api.new)
   (vp_left + (time_past / 3600.0) * (20.0/24.0)).round(2)
 end
 
-TEST_MODE = true # Should be false on production
+TEST_MODE = false # Should be false on production
 POWER_TOTAL = if TEST_MODE
   1080
 else
@@ -286,8 +286,10 @@ task :voting_bot => :environment do |t, args|
     proportion = pair[1] / total_rshares
     hunt_amount = HUNT_DISTRIBUTION_VOTE * proportion
 
-    HuntTransaction.reward_votings!(username, hunt_amount, yesterday) unless TEST_MODE
-    logger.log "@#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(2)}%"
+    # TODO: uncomment it for actual distribution
+    logger.log "TEST - @#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(2)}%"
+    # HuntTransaction.reward_votings!(username, hunt_amount, yesterday) unless TEST_MODE
+    # logger.log "@#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(2)}%"
   end
 
   # 2. HUNT resteem distribution
@@ -296,9 +298,10 @@ task :voting_bot => :environment do |t, args|
   logger.log "\n==\n========== HUNT DISTRIBUTION ON #{resteemed_users.size} RESTEEMS ==========\n==", true
 
   resteemed_users.each do |username|
-    HuntTransaction.reward_resteems!(username, hunt_per_resteem, yesterday) unless TEST_MODE
+    # HuntTransaction.reward_resteems!(username, hunt_per_resteem, yesterday) unless TEST_MODE
   end
-  logger.log "Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users"
+  logger.log "TEST - Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users"
+  # logger.log "Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users"
 
   posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
 
