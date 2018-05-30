@@ -14,12 +14,6 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
   logger = SLogger.new
   logger.log "== SPONSOR REWARD DISTRIBUTION - WEEK #{week} ==", true
 
-  # Check the transaction already made
-  if HuntTransaction.exists?(memo: "#{HuntTransaction::SPONSOR_PAYOUT_MEMO_PREFIX}#{week}")
-    logger.log "Week #{week} distribution has already made, FINISH", true
-    next
-  end
-
   begin
     # REF: https://helloacm.com/tools/steemit/delegators/
     uri = URI('https://happyukgo.com/api/steemit/delegators/?id=steemhunt&hash=f5e8d590f8a50cb4151a088b6078f8a7')

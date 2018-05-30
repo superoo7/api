@@ -1,9 +1,12 @@
+require 'utils'
+
 class HuntTransaction < ApplicationRecord
   validates_presence_of :amount, :memo
   validate :validate_sender_and_receiver, :validate_eth_format
   validates :memo, length: { maximum: 255 }
 
-  SPONSOR_PAYOUT_MEMO_PREFIX = 'Steemhunt weekly HUNT reward from the sponsor program: week '
+  SPONSOR_REWARD_MEMO_PREFIX = 'Weekly reward for delegation sponsor - week ' # + num
+  VOTING_REWARD_MEMO_PREFIX = 'Daily reward for voting contribution - ' # + formatted date (%e %b %Y)
 
   def validate_sender_and_receiver
     if sender.blank? && receiver.blank?
@@ -33,13 +36,22 @@ class HuntTransaction < ApplicationRecord
     end
   end
 
+  def self.reward_votings!(username, amount, date)
+    self.reward_user!(username, amount, "#{HuntTransaction::VOTING_REWARD_MEMO_PREFIX}#{formatted_date(date)}")
+  end
+
   def self.reward_sponsor!(username, amount, week)
+    self.reward_user!(username, amount, "#{HuntTransaction::SPONSOR_REWARD_MEMO_PREFIX}#{week}")
+  end
+
+  def self.reward_user!(username, amount, memo)
     return if amount == 0
+    raise 'Duplicated Rewards' if self.exists?(receiver: username, memo: memo)
 
     user = User.find_by(username: username)
     user = User.create!(username: username, encrypted_token: '') unless user
 
-    self.send!('steemhunt', amount, user.username, nil, "#{SPONSOR_PAYOUT_MEMO_PREFIX}#{week}")
+    self.send!('steemhunt', amount, user.username, nil, memo)
   end
 
   def self.send!(sender_name, amount, receiver_name = nil, eth_address = nil, memo = nil)
