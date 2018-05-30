@@ -1,6 +1,7 @@
 class HuntTransaction < ApplicationRecord
   validates_presence_of :amount, :memo
   validate :validate_sender_and_receiver, :validate_eth_format
+  validates :memo, length: { maximum: 255 }
 
   SPONSOR_PAYOUT_MEMO_PREFIX = 'Steemhunt weekly HUNT reward from the sponsor program: week '
 
