@@ -31,7 +31,7 @@ else
   # NOTE:
   # If current VP is 70%, we need to only use 10% VP (= 540 VP)
   # This script should not run if POWER_TOTAL_POST < 0
-  (TOTAL_VP_TO_USE - (TOTAL_VP_TO_USE * (80 - current_voting_power) / 20)) * 0.8
+  (TOTAL_VP_TO_USE - (TOTAL_VP_TO_USE * (100 - current_voting_power) / 20)) * 0.8
 end
 POWER_TOTAL_COMMENT = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
 POWER_TOTAL_MODERATOR = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
