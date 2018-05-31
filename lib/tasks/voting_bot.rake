@@ -244,6 +244,11 @@ task :voting_bot => :environment do |t, args|
       resteemed_by = with_retry(3) do
         api.get_reblogged_by(post.author, post.permlink)['result']
       end
+
+      # FFS : just ignore this for now
+      if resteemed_by.nil?
+        resteemed_by = []
+      end
       logger.log "--> RESTEEM COUNT: #{resteemed_by.size}"
       resteemed_by.each do |username|
         has_resteemed[username] = true unless has_resteemed[username]
