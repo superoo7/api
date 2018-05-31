@@ -106,7 +106,11 @@ def natural_distributed_array(size)
     end
   end
 
-  selected.map { |n| n.round(2) }
+  if selected.nil?
+    Array.new(size, POWER_TOTAL_POST / size) # linear if POWER_TOTAL_POST is too small
+  else
+    selected.map { |n| n.round(2) }
+  end
 end
 
 def vote(author, permlink, power)
