@@ -23,9 +23,9 @@ def current_voting_power(api = Radiator::Api.new)
   current_vp > 100 ? 100.0 : current_vp
 end
 
-TEST_MODE = true # Should be false on production
-TOTAL_VP_TO_USE = 1080
-POWER_TOTAL_POST = if current_voting_power > 99.99 # TODO: TEST_MODE || 
+TEST_MODE = false # Should be false on production
+TOTAL_VP_TO_USE = 1080.0
+POWER_TOTAL_POST = if TEST_MODE || current_voting_power > 99.99
   TOTAL_VP_TO_USE * 0.8
 else
   # NOTE:
@@ -195,7 +195,7 @@ task :voting_bot => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  logger.log "\n==\n========== VOTING STARTS WITH #{POWER_TOTAL_POST} POST VP - #{formatted_date(yesterday)} ==========", true
+  logger.log "\n==\n========== VOTING STARTS with #{(POWER_TOTAL_POST * 1.25).round(2)}% TOTAL VP - #{formatted_date(yesterday)} ==========", true
   logger.log "Current voting power: #{current_voting_power(api)}%"
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                order('payout_value DESC').
@@ -286,7 +286,7 @@ task :voting_bot => :environment do |t, args|
   # 1. HUNT voting distribution
   total_rshares = rshares_by_users.values.sum.to_f
   rshares_by_users = rshares_by_users.sort_by {|k,v| v}.reverse
-  logger.log "\n==\n========== HUNT DISTRIBUTION ON #{rshares_by_users.size} VOTERS ==========\n==", true
+  logger.log "\n==\n========== #{HUNT_DISTRIBUTION_VOTE} HUNT DISTRIBUTION ON #{rshares_by_users.size} VOTERS ==========\n==", true
 
   rshares_by_users.each do |pair|
     username = pair[0]
@@ -302,7 +302,7 @@ task :voting_bot => :environment do |t, args|
   # 2. HUNT resteem distribution
   resteemed_users = has_resteemed.keys
   hunt_per_resteem = HUNT_DISTRIBUTION_RESTEEM / resteemed_users.size
-  logger.log "\n==\n========== HUNT DISTRIBUTION ON #{resteemed_users.size} RESTEEMERS ==========\n==", true
+  logger.log "\n==\n========== #{HUNT_DISTRIBUTION_RESTEEM} HUNT DISTRIBUTION ON #{resteemed_users.size} RESTEEMERS ==========\n==", true
 
   resteemed_users.each do |username|
     # TODO: uncomment it for actual distribution
@@ -314,7 +314,7 @@ task :voting_bot => :environment do |t, args|
 
   posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
 
-  logger.log "\n==\n========== VOTING ON #{posts.size} POSTS ==========\n==", true
+  logger.log "\n==\n========== VOTING ON #{posts.size} POSTS with #{POWER_TOTAL_POST.round(2)}% VP ==========\n==", true
 
   vp_distribution = natural_distributed_array(posts.size)
   posts.each_with_index do |post, i|
@@ -333,7 +333,7 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  logger.log "\n==\n========== VOTING ON #{review_comments.size} REVIEW COMMENTS ==========\n==", true
+  logger.log "\n==\n========== VOTING ON #{review_comments.size} REVIEW COMMENTS with #{POWER_TOTAL_COMMENT.round(2)}% VP ==========\n==", true
 
   voting_power = (POWER_TOTAL_COMMENT / review_comments.size).floor(2)
   voting_power = 100.0 if voting_power > 100
@@ -348,7 +348,7 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  logger.log "\n==\n========== VOTING ON #{moderators_comments.size} MODERATOR COMMENTS ==========\n==", true
+  logger.log "\n==\n========== VOTING ON #{moderators_comments.size} MODERATOR COMMENTS with #{POWER_TOTAL_MODERATOR.round(2)}% VP ==========\n==", true
 
   voting_power = (POWER_TOTAL_MODERATOR / moderators_comments.size).floor(2)
   voting_power = 100.0 if voting_power > 100
