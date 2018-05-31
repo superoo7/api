@@ -17,7 +17,7 @@ class Discord
         if result['retry_after']
           wait_seconds = result['retry_after'].to_f / 1000
           puts "Rate limitted, retry after #{wait_seconds}s"
-          sleep(wait_seconds)
+          sleep(wait_seconds + 10)
           self.send(content)
         end
       rescue
