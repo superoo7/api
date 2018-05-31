@@ -1,9 +1,8 @@
 class HuntTransactionsController < ApplicationController
-  # before_action :ensure_login!
+  before_action :ensure_login!
 
   # GET /hunt_transactions.json
   def index
-    @current_user = User.find_by(username: 'tabris')
     @transactions = HuntTransaction.
       where('sender = ? OR receiver = ?', @current_user.username, @current_user.username).
       order('created_at DESC').
