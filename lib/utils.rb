@@ -1,5 +1,3 @@
-require 's_logger'
-
 def formatted_number(number, precision = 2)
   number.round(precision).to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
 end
@@ -13,13 +11,13 @@ def with_retry(limit)
     begin
       res = yield i
       if res.try(:error)
-        SLogger.log res.error
-        raise
+        puts res.error
+        raise res.error
       end
 
       return res
     rescue => e
-      SLogger.log e
+      puts e
       raise e if i + 1 == limit
     end
     sleep(10)
