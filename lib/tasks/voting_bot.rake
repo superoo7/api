@@ -333,7 +333,7 @@ task :voting_bot => :environment do |t, args|
     ranking = i + 1
     voting_power = vp_distribution[ranking - 1]
 
-    logger.log "Voting on ##{ranking} (#{voting_power}%): @#{post.author}/#{post.permlink}", true
+    logger.log "Voting on ##{ranking} (#{voting_power}%): @#{post.author}/#{post.permlink}"
     if posts_to_skip.include?(post.id)
       logger.log "--> SKIPPED_POST"
     else
