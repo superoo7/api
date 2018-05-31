@@ -9,7 +9,7 @@ require 'utils'
 #   We need to fix this correctly later
 
 def current_voting_power(api = Radiator::Api.new)
-  account = with_retry(30) do
+  account = with_retry(3) do
     api.get_accounts(['steemhunt'])['result'][0]
   end
   vp_left = (account['voting_power'] / 100.0).round(2)
@@ -123,7 +123,7 @@ def vote(author, permlink, power)
     weight: (power * 100).to_i
   }
   tx.operations << vote
-  with_retry(30) do
+  with_retry(3) do
     tx.process(!TEST_MODE)
   end
 end
@@ -173,7 +173,7 @@ def get_bid_bot_ids
 end
 
 def comment_already_voted?(comment, api)
-  votes = with_retry(30) do
+  votes = with_retry(3) do
     api.get_content(comment['author'], comment['permlink'])['result']['active_votes']
   end
 
@@ -227,7 +227,7 @@ task :voting_bot => :environment do |t, args|
     end
 
     if post.is_active
-      votes = with_retry(30) do
+      votes = with_retry(3) do
         api.get_content(post.author, post.permlink)['result']['active_votes']
       end
 
@@ -245,7 +245,7 @@ task :voting_bot => :environment do |t, args|
         end
       end
 
-      resteemed_by = with_retry(30) do
+      resteemed_by = with_retry(3) do
         api.get_reblogged_by(post.author, post.permlink)['result']
       end
 
@@ -262,7 +262,7 @@ task :voting_bot => :environment do |t, args|
       logger.log "--> HIDDEN: still checks comments for moderators and review comments"
     end
 
-    comments = with_retry(30) do
+    comments = with_retry(3) do
       api.get_content_replies(post.author, post.permlink)['result']
     end
     # logger.log "----> #{comments.size} comments returned"
