@@ -1,7 +1,4 @@
 class User < ApplicationRecord
-  has_many :sent_transactions, class_name: 'HuntTransaction', foreign_key: 'sender_id'
-  has_many :received_transactions, class_name: 'HuntTransaction', foreign_key: 'recipient_id'
-
   validates_presence_of :username
   validate :validate_eth_format
   has_many :hunt_transactions

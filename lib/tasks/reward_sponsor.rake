@@ -14,12 +14,6 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
   logger = SLogger.new
   logger.log "== SPONSOR REWARD DISTRIBUTION - WEEK #{week} ==", true
 
-  # Check the transaction already made
-  if HuntTransaction.exists?(memo: "#{HuntTransaction::SPONSOR_PAYOUT_MEMO_PREFIX}#{week}")
-    logger.log "Week #{week} distribution has already made, FINISH", true
-    next
-  end
-
   begin
     # REF: https://helloacm.com/tools/steemit/delegators/
     uri = URI('https://happyukgo.com/api/steemit/delegators/?id=steemhunt&hash=f5e8d590f8a50cb4151a088b6078f8a7')
@@ -96,11 +90,12 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
   logger.log "\n== SEND #{formatted_number(total_steem_distributed)} STEEM TO #{steem_transactions.size} SPONSORS (#{json.size - steem_transactions.size} omitted less than 0.001) ==", true
 
   if should_write
-    tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_PAY_ACTIVE_KEY'])
-    tx.operations = steem_transactions
-    result = tx.process(true)
-
-    logger.log "Sent: #{result}", true
+    steem_transactions.each do |t|
+      tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_PAY_ACTIVE_KEY'])
+      tx.operations << t
+      result = tx.process(true)
+      logger.log "Sent to #{t[:to]} - #{t[:amount]} STEEM: #{result.try(:id)}", true
+    end
   end
 end
 

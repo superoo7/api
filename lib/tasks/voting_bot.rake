@@ -1,5 +1,5 @@
 require 'radiator'
-require 's_logger'
+require 'utils'
 
 # NOTE: The total voting power is not a constant number like 1000
 #   it will be closer to 1100 because:
@@ -7,11 +7,38 @@ require 's_logger'
 #   it will deduct 0.8 * 100 * 0.02 = 1.6% vp (not 2.0%)
 #
 #   We need to fix this correctly later
-POWER_TOTAL = 856.0
-POWER_TOTAL_COMMENT = 107.0
-POWER_TOTAL_MODERATOR = 107.0 # TODO: increase it to  100.0
+
+def current_voting_power(api = Radiator::Api.new)
+  account = with_retry(3) do
+    api.get_accounts(['steemhunt'])['result'][0]
+  end
+  vp_left = (account['voting_power'] / 100.0).round(2)
+
+  last_vote_time = Time.parse(account['last_vote_time']) + Time.new.gmt_offset
+  time_past = Time.now - last_vote_time
+
+  # VP recovers (20/24)% per hour
+  current_vp = (vp_left + (time_past / 3600.0) * (20.0/24.0)).round(2)
+
+  current_vp > 100 ? 100.0 : current_vp
+end
+
+TEST_MODE = false # Should be false on production
+TOTAL_VP_TO_USE = 1080.0
+POWER_TOTAL_POST = if TEST_MODE || current_voting_power > 99.99
+  TOTAL_VP_TO_USE * 0.8
+else
+  # NOTE:
+  # If current VP is 70%, we need to only use 10% VP (= 540 VP)
+  # This script should not run if POWER_TOTAL_POST < 0
+  (TOTAL_VP_TO_USE - (TOTAL_VP_TO_USE * (100 - current_voting_power) / 20)) * 0.8
+end
+POWER_TOTAL_COMMENT = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
+POWER_TOTAL_MODERATOR = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 1000
+HUNT_DISTRIBUTION_VOTE = 40000.0
+HUNT_DISTRIBUTION_RESTEEM = 20000.0
 
 def get_minimum_power(size)
   minimum = if size < 20
@@ -28,9 +55,9 @@ def get_minimum_power(size)
 end
 
 # def evenly_distributed_array(size)
-#   return Array.new(size, POWER_MAX) if size <= POWER_TOTAL /  POWER_MAX
+#   return Array.new(size, POWER_MAX) if size <= POWER_TOTAL_POST /  POWER_MAX
 
-#   average = POWER_TOTAL / size
+#   average = POWER_TOTAL_POST / size
 #   array = Array.new(size, average)
 #   half = (size / 2).floor
 
@@ -54,7 +81,7 @@ def natural_distribution_test(size, temperature)
   minimum = get_minimum_power(size)
   allocated = Array.new(size, minimum)
   allocated[0] = POWER_MAX
-  available = POWER_TOTAL - POWER_MAX - minimum * (size - 1)
+  available = POWER_TOTAL_POST - POWER_MAX - minimum * (size - 1)
 
   (1..size - 1).each do |i|
     allocated[i] += (available * softmaxes[size -  i - 1])
@@ -63,15 +90,8 @@ def natural_distribution_test(size, temperature)
   allocated
 end
 
-# def actual_vp_left(array)
-#   vp_left = 100.0
-#   array.each { |vp| vp_left -= (vp_left / 100) * vp * 0.02 }
-
-#   vp_left
-# end
-
 def natural_distributed_array(size)
-  return Array.new(size, POWER_MAX) if size <= POWER_TOTAL /  POWER_MAX
+  return Array.new(size, POWER_MAX) if size <= POWER_TOTAL_POST /  POWER_MAX
 
   minimum = get_minimum_power(size)
 
@@ -100,13 +120,12 @@ def vote(author, permlink, power)
   }
   tx.operations << vote
   with_retry(3) do
-    tx.process(true)
+    tx.process(!TEST_MODE)
   end
 end
 
 def comment(author, permlink, rank)
-  yesterday = Date.yesterday.strftime("%e %b %Y")
-  msg = "### Congratulation! Your hunt was ranked in #{rank.ordinalize} place on #{yesterday} on Steemhunt.\n" +
+  msg = "### Congratulation! Your hunt was ranked in #{rank.ordinalize} place on #{formatted_date(Date.yesterday)} on Steemhunt.\n" +
     "We have upvoted your post for your contribution within our community.\n" +
     "Thanks again and look forward to seeing your next hunt!\n\n" +
     "Want to chat? Join us on:\n" +
@@ -130,7 +149,7 @@ def comment(author, permlink, rank)
     }.to_json
   }
   tx.operations << comment
-  tx.process(true)
+  tx.process(!TEST_MODE)
 end
 
 def run_and_retry_on_exception(cmd, tries: 0, max_tries: 3, delay: 10)
@@ -139,33 +158,14 @@ def run_and_retry_on_exception(cmd, tries: 0, max_tries: 3, delay: 10)
 rescue SomeException => exception
   report_exception(exception, cmd: cmd)
   unless tries >= max_tries
-    sleep delay
+    sleep(delay) unless TEST_MODE
     retry
   end
 end
 
-def with_retry(limit)
-  limit.times do |i|
-    begin
-      res = yield i
-      if res.try(:error)
-        SLogger.log res.error
-        raise
-      end
-
-      return res
-    rescue => e
-      SLogger.log e
-      raise e if i + 1 == limit
-    end
-    sleep(10)
-  end
-end
 
 def get_bid_bot_ids
-  # Disable bidbot filtering - REF: #discussion on Discord on 2018-04-30
-  # JSON.parse(File.read("#{Rails.root}/db/bid_bot_ids.json"))
-  []
+  JSON.parse(File.read("#{Rails.root}/db/bid_bot_ids.json"))
 end
 
 def comment_already_voted?(comment, api)
@@ -184,24 +184,34 @@ end
 
 desc 'Voting bot'
 task :voting_bot => :environment do |t, args|
+  logger = SLogger.new
+
+  if POWER_TOTAL_POST < 0
+    logger.log "Less than 80% voting power left, STOP voting bot"
+    next
+  end
+
+  api = Radiator::Api.new
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  logger = SLogger.new
-
-  logger.log "Voting on daily post begin"
+  logger.log "\n==\n========== VOTING STARTS with #{(POWER_TOTAL_POST * 1.25).round(2)}% TOTAL VP - #{formatted_date(yesterday)} ==========", true
+  logger.log "Current voting power: #{current_voting_power(api)}%"
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                order('payout_value DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
 
-  logger.log "Total #{posts.size} posts found on #{yesterday.strftime("%e %b %Y")}", true
+  logger.log "Total #{posts.size} posts found on #{formatted_date(yesterday)}\n==", true
 
-  api = Radiator::Api.new
   bid_bot_ids = get_bid_bot_ids
   review_comments = []
   moderators_comments =  []
-  posts_to_skip = []
-  posts_to_remove = []
+  posts_to_skip = [] # posts that should skip votings, but need to be counted for VP
+  posts_to_remove = [] # posts  that should be removed from the ranking entirely (not counted for VP)
+
+  # For voting / resteem contributions
+  rshares_by_users = {}
+  has_resteemed = {}
   posts.each_with_index do |post, i|
     logger.log "@#{post.author}/#{post.permlink}"
 
@@ -217,17 +227,26 @@ task :voting_bot => :environment do |t, args|
         api.get_content(post.author, post.permlink)['result']['active_votes']
       end
 
-      # logger.log "----> #{votes.size} active votes returned"
+      logger.log "--> VOTE COUNT: #{votes.size}"
       votes.each do |vote|
         if vote['voter'] == 'steemhunt'
           posts_to_skip << post.id
           logger.log "--> SKIP: Already voted"
-          break # inner loop only
-        elsif bid_bot_ids.include?(vote['voter'])
-          posts_to_remove << post.id
-          logger.log "--> REMOVE: Bitbot use detected: #{vote['voter']}"
-          break # inner loop only
+        elsif !bid_bot_ids.include?(vote['voter'])
+          if rshares_by_users[vote['voter']]
+            rshares_by_users[vote['voter']] += vote['rshares'].to_i
+          else
+            rshares_by_users[vote['voter']] = vote['rshares'].to_i
+          end
         end
+      end
+
+      resteemed_by = with_retry(3) do
+        api.get_reblogged_by(post.author, post.permlink)['result']
+      end
+      logger.log "--> RESTEEM COUNT: #{resteemed_by.size}"
+      resteemed_by.each do |username|
+        has_resteemed[username] = true unless has_resteemed[username]
       end
     else
       posts_to_remove << post.id
@@ -264,9 +283,38 @@ task :voting_bot => :environment do |t, args|
     end # comments.each
   end # posts.each
 
+  # 1. HUNT voting distribution
+  total_rshares = rshares_by_users.values.sum.to_f
+  rshares_by_users = rshares_by_users.sort_by {|k,v| v}.reverse
+  logger.log "\n==\n========== #{HUNT_DISTRIBUTION_VOTE} HUNT DISTRIBUTION ON #{rshares_by_users.size} VOTERS ==========\n==", true
+
+  rshares_by_users.each do |pair|
+    username = pair[0]
+    proportion = pair[1] / total_rshares
+    hunt_amount = HUNT_DISTRIBUTION_VOTE * proportion
+
+    # TODO: uncomment it for actual distribution
+    logger.log "TEST - @#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(4)}%"
+    # HuntTransaction.reward_votings!(username, hunt_amount, yesterday) unless TEST_MODE
+    # logger.log "@#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(4)}%"
+  end
+
+  # 2. HUNT resteem distribution
+  resteemed_users = has_resteemed.keys
+  hunt_per_resteem = HUNT_DISTRIBUTION_RESTEEM / resteemed_users.size
+  logger.log "\n==\n========== #{HUNT_DISTRIBUTION_RESTEEM} HUNT DISTRIBUTION ON #{resteemed_users.size} RESTEEMERS ==========\n==", true
+
+  resteemed_users.each do |username|
+    # TODO: uncomment it for actual distribution
+    # HuntTransaction.reward_resteems!(username, hunt_per_resteem, yesterday) unless TEST_MODE
+  end
+  logger.log "TEST - Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users"
+  # TODO: uncomment it for actual distribution
+  # logger.log "Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users"
+
   posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
 
-  logger.log "\n\n== VOTING ON #{posts.size} POSTS ==", true
+  logger.log "\n==\n========== VOTING ON #{posts.size} POSTS with #{POWER_TOTAL_POST.round(2)}% VP ==========\n==", true
 
   vp_distribution = natural_distributed_array(posts.size)
   posts.each_with_index do |post, i|
@@ -277,7 +325,7 @@ task :voting_bot => :environment do |t, args|
     if posts_to_skip.include?(post.id)
       logger.log "--> SKIPPED_POST", true
     else
-      sleep(20)
+      sleep(20) unless TEST_MODE
       res = vote(post.author, post.permlink, voting_power)
       logger.log "--> VOTED_POST: #{res.result.try(:id) || res.error}", true
       res = comment(post.author, post.permlink, ranking)
@@ -285,39 +333,35 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  logger.log "\n\n== VOTING ON #{review_comments.size} REVIEW COMMENTS ==", true
+  logger.log "\n==\n========== VOTING ON #{review_comments.size} REVIEW COMMENTS with #{POWER_TOTAL_COMMENT.round(2)}% VP ==========\n==", true
 
-  voting_power = (POWER_TOTAL_COMMENT / review_comments.size).round(2)
+  voting_power = (POWER_TOTAL_COMMENT / review_comments.size).floor(2)
   voting_power = 100.0 if voting_power > 100
   review_comments.each do |comment|
     logger.log "Voting on review comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}", true
     if comment[:should_skip]
       logger.log "--> SKIPPED_REVIEW", true
     else
-      sleep(3)
+      sleep(3) unless TEST_MODE
       res = vote(comment[:author], comment[:permlink], voting_power)
       logger.log "--> VOTED_REVIEW: #{res.result.try(:id) || res.error}", true
     end
   end
 
-  logger.log "\n\n== VOTING ON #{moderators_comments.size} MODERATOR COMMENTS ==", true
+  logger.log "\n==\n========== VOTING ON #{moderators_comments.size} MODERATOR COMMENTS with #{POWER_TOTAL_MODERATOR.round(2)}% VP ==========\n==", true
 
-  voting_power = (POWER_TOTAL_MODERATOR / moderators_comments.size).round(2)
+  voting_power = (POWER_TOTAL_MODERATOR / moderators_comments.size).floor(2)
   voting_power = 100.0 if voting_power > 100
   moderators_comments.each do |comment|
     logger.log "Voting on moderator comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}", true
     if comment[:should_skip]
       logger.log "--> SKIPPED_MODERATOR", true
     else
-      sleep(3)
+      sleep(3) unless TEST_MODE
       res = vote(comment[:author], comment[:permlink], voting_power)
       logger.log "--> VOTED_MODERATOR: #{res.result.try(:id) || res.error}", true
     end
   end
 
-  vp_left = with_retry(3) do
-    api.get_accounts(['steemhunt'])['result'][0]['voting_power']
-  end
-
-  logger.log "Votings Finished, #{(vp_left / 100.0).round(2)}% VP left", true
+  logger.log "Votings Finished, #{current_voting_power(api)}% VP left", true
 end
