@@ -1,5 +1,6 @@
 require 'radiator'
 require 'utils'
+require 's_logger'
 
 # NOTE: The total voting power is not a constant number like 1000
 #   it will be closer to 1100 because:
@@ -35,6 +36,8 @@ else
 end
 POWER_TOTAL_COMMENT = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
 POWER_TOTAL_MODERATOR = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
+# POWER_TOTAL_COMMENT = POWER_TOTAL_POST * 0.125 # 10% of total VP
+# POWER_TOTAL_MODERATOR = POWER_TOTAL_POST * 0.125 # 10% of total VP
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 1000
 HUNT_DISTRIBUTION_VOTE = 40000.0
