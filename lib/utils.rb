@@ -22,6 +22,6 @@ def with_retry(limit)
       SLogger.log e
       raise e if i + 1 == limit
     end
-    sleep(10) unless TEST_MODE
+    sleep(30) unless TEST_MODE
   end
 end
