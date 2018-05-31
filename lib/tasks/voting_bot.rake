@@ -107,7 +107,7 @@ def natural_distributed_array(size)
   end
 
   if selected.nil?
-    Array.new(size, POWER_TOTAL_POST / size) # linear if POWER_TOTAL_POST is too small
+    Array.new(size, POWER_TOTAL_POST / size) # FFS: linear if POWER_TOTAL_POST is too small
   else
     selected.map { |n| n.round(2) }
   end
@@ -332,11 +332,11 @@ task :voting_bot => :environment do |t, args|
 
     logger.log "Voting on ##{ranking} (#{voting_power}%): @#{post.author}/#{post.permlink}", true
     if posts_to_skip.include?(post.id)
-      logger.log "--> SKIPPED_POST", true
+      logger.log "--> SKIPPED_POST"
     else
       sleep(20) unless TEST_MODE
       res = vote(post.author, post.permlink, voting_power)
-      logger.log "--> VOTED_POST: #{res.result.try(:id) || res.error}", true
+      logger.log "--> VOTED_POST: #{res.result.try(:id) || res.error}"
       res = comment(post.author, post.permlink, ranking)
       logger.log "--> COMMENTED: #{res.result.try(:id) || res.error}", true
     end
