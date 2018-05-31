@@ -22,13 +22,17 @@ def current_voting_power(api = Radiator::Api.new)
 end
 
 TEST_MODE = false # Should be false on production
-POWER_TOTAL = if TEST_MODE
-  1080
+TOTAL_VP_TO_USE = 1080
+POWER_TOTAL_POST = if TEST_MODE || current_voting_power > 80
+  TOTAL_VP_TO_USE * 0.8
 else
-  1080 - (108 * (100.0 - current_voting_power) / 2) # 80% of total VP - 856 when 1080
+  # NOTE:
+  # If current VP is 70%, we need to only use 10% VP (= 540 VP)
+  # This script should not run if POWER_TOTAL_POST < 0
+  (TOTAL_VP_TO_USE - (TOTAL_VP_TO_USE * (80 - current_voting_power) / 20)) * 0.8
 end
-POWER_TOTAL_COMMENT = POWER_TOTAL * 0.125 # 10% of total VP
-POWER_TOTAL_MODERATOR = POWER_TOTAL * 0.125 # 10% of total VP
+POWER_TOTAL_COMMENT = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
+POWER_TOTAL_MODERATOR = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 1000
 HUNT_DISTRIBUTION_VOTE = 40000
@@ -49,9 +53,9 @@ def get_minimum_power(size)
 end
 
 # def evenly_distributed_array(size)
-#   return Array.new(size, POWER_MAX) if size <= POWER_TOTAL /  POWER_MAX
+#   return Array.new(size, POWER_MAX) if size <= POWER_TOTAL_POST /  POWER_MAX
 
-#   average = POWER_TOTAL / size
+#   average = POWER_TOTAL_POST / size
 #   array = Array.new(size, average)
 #   half = (size / 2).floor
 
@@ -75,7 +79,7 @@ def natural_distribution_test(size, temperature)
   minimum = get_minimum_power(size)
   allocated = Array.new(size, minimum)
   allocated[0] = POWER_MAX
-  available = POWER_TOTAL - POWER_MAX - minimum * (size - 1)
+  available = POWER_TOTAL_POST - POWER_MAX - minimum * (size - 1)
 
   (1..size - 1).each do |i|
     allocated[i] += (available * softmaxes[size -  i - 1])
@@ -85,7 +89,7 @@ def natural_distribution_test(size, temperature)
 end
 
 def natural_distributed_array(size)
-  return Array.new(size, POWER_MAX) if size <= POWER_TOTAL /  POWER_MAX
+  return Array.new(size, POWER_MAX) if size <= POWER_TOTAL_POST /  POWER_MAX
 
   minimum = get_minimum_power(size)
 
@@ -180,7 +184,7 @@ desc 'Voting bot'
 task :voting_bot => :environment do |t, args|
   logger = SLogger.new
 
-  if POWER_TOTAL < 0 && !TEST_MODE
+  if POWER_TOTAL_POST < 0
     logger.log "Less than 80% voting power left, STOP voting bot"
     next
   end
@@ -189,7 +193,7 @@ task :voting_bot => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  logger.log "\n==\n========== VOTING STARTS WITH #{POWER_TOTAL} TOTAL VP - #{formatted_date(yesterday)} ==========\n==", true
+  logger.log "\n==\n========== VOTING STARTS WITH #{POWER_TOTAL_POST} TOTAL VP - #{formatted_date(yesterday)} ==========\n==", true
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                order('payout_value DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
@@ -279,7 +283,7 @@ task :voting_bot => :environment do |t, args|
   # 1. HUNT voting distribution
   total_rshares = rshares_by_users.values.sum.to_f
   rshares_by_users = rshares_by_users.sort_by {|k,v| v}.reverse
-  logger.log "\n==\n========== HUNT DISTRIBUTION ON #{rshares_by_users.size} VOTINGS ==========\n==", true
+  logger.log "\n==\n========== HUNT DISTRIBUTION ON #{rshares_by_users.size} VOTERS ==========\n==", true
 
   rshares_by_users.each do |pair|
     username = pair[0]
@@ -295,12 +299,14 @@ task :voting_bot => :environment do |t, args|
   # 2. HUNT resteem distribution
   resteemed_users = has_resteemed.keys
   hunt_per_resteem = HUNT_DISTRIBUTION_RESTEEM / resteemed_users.size
-  logger.log "\n==\n========== HUNT DISTRIBUTION ON #{resteemed_users.size} RESTEEMS ==========\n==", true
+  logger.log "\n==\n========== HUNT DISTRIBUTION ON #{resteemed_users.size} RESTEEMERS ==========\n==", true
 
   resteemed_users.each do |username|
+    # TODO: uncomment it for actual distribution
     # HuntTransaction.reward_resteems!(username, hunt_per_resteem, yesterday) unless TEST_MODE
   end
   logger.log "TEST - Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users"
+  # TODO: uncomment it for actual distribution
   # logger.log "Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users"
 
   posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }

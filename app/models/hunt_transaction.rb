@@ -56,14 +56,14 @@ class HuntTransaction < ApplicationRecord
     user = User.find_by(username: username)
     user = User.create!(username: username, encrypted_token: '') unless user
 
-    self.send!('steemhunt', amount, user.username, nil, memo)
+    self.send!(amount, 'steemhunt', user.username, nil, memo)
   end
 
-  def self.send!(sender_name, amount, receiver_name = nil, eth_address = nil, memo = nil)
+  def self.send!(amount, sender_name = nil, receiver_name = nil, eth_address = nil, memo = nil)
     return if amount == 0
 
-    sender = sender_name.nil? ? nil : User.find_by(username: sender_name)
-    receiver = receiver_name.nil? ? nil : User.find_by(username: receiver_name)
+    sender = sender_name.blank? ? nil : User.find_by(username: sender_name)
+    receiver = receiver_name.blank? ? nil : User.find_by(username: receiver_name)
 
     ActiveRecord::Base.transaction do
       self.create!(
@@ -74,7 +74,7 @@ class HuntTransaction < ApplicationRecord
         memo: memo
       )
 
-      unless sender.nil?
+      unless sender.blank?
         sender.update!(hunt_balance: sender.hunt_balance - amount)
       end
       unless receiver.blank?
@@ -85,7 +85,7 @@ class HuntTransaction < ApplicationRecord
     unless eth_address.blank?
       # TODO: ETH Transaction
 
-      # TODO: Rollback on errors - should be in a separate transaction
+      # TODO: Rollback DB on errors - should be in a separate transaction
     end
   end
 end
