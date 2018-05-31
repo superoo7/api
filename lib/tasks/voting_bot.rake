@@ -18,12 +18,14 @@ def current_voting_power(api = Radiator::Api.new)
   time_past = Time.now - last_vote_time
 
   # VP recovers (20/24)% per hour
-  (vp_left + (time_past / 3600.0) * (20.0/24.0)).round(2)
+  current_vp = (vp_left + (time_past / 3600.0) * (20.0/24.0)).round(2)
+
+  current_vp > 100 ? 100.0 : current_vp
 end
 
-TEST_MODE = false # Should be false on production
+TEST_MODE = true # Should be false on production
 TOTAL_VP_TO_USE = 1080
-POWER_TOTAL_POST = if TEST_MODE || current_voting_power > 80
+POWER_TOTAL_POST = if current_voting_power > 99.99 # TODO: TEST_MODE || 
   TOTAL_VP_TO_USE * 0.8
 else
   # NOTE:
@@ -35,8 +37,8 @@ POWER_TOTAL_COMMENT = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
 POWER_TOTAL_MODERATOR = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 1000
-HUNT_DISTRIBUTION_VOTE = 40000
-HUNT_DISTRIBUTION_RESTEEM = 20000
+HUNT_DISTRIBUTION_VOTE = 40000.0
+HUNT_DISTRIBUTION_RESTEEM = 20000.0
 
 def get_minimum_power(size)
   minimum = if size < 20
@@ -193,12 +195,13 @@ task :voting_bot => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  logger.log "\n==\n========== VOTING STARTS WITH #{POWER_TOTAL_POST} TOTAL VP - #{formatted_date(yesterday)} ==========\n==", true
+  logger.log "\n==\n========== VOTING STARTS WITH #{POWER_TOTAL_POST} POST VP - #{formatted_date(yesterday)} ==========", true
+  logger.log "Current voting power: #{current_voting_power(api)}%"
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                order('payout_value DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
 
-  logger.log "Total #{posts.size} posts found on #{formatted_date(yesterday)}", true
+  logger.log "Total #{posts.size} posts found on #{formatted_date(yesterday)}\n==", true
 
   bid_bot_ids = get_bid_bot_ids
   review_comments = []
@@ -291,9 +294,9 @@ task :voting_bot => :environment do |t, args|
     hunt_amount = HUNT_DISTRIBUTION_VOTE * proportion
 
     # TODO: uncomment it for actual distribution
-    logger.log "TEST - @#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(2)}%"
+    logger.log "TEST - @#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(4)}%"
     # HuntTransaction.reward_votings!(username, hunt_amount, yesterday) unless TEST_MODE
-    # logger.log "@#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(2)}%"
+    # logger.log "@#{username} received #{hunt_amount.round(2)} HUNT - #{(100 * proportion).round(4)}%"
   end
 
   # 2. HUNT resteem distribution
