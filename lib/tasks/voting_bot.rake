@@ -26,7 +26,7 @@ end
 
 TEST_MODE = false # Should be false on production
 TOTAL_VP_TO_USE = 1080.0
-POWER_TOTAL_POST = if TEST_MODE || current_voting_power > 99.99
+POWER_TOTAL_POST = if current_voting_power > 99.99
   TOTAL_VP_TO_USE * 0.8
 else
   # NOTE:

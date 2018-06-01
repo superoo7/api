@@ -12,7 +12,7 @@ def with_retry(limit)
       res = yield i
       if res.try(:error)
         puts res.error
-        raise res.error
+        raise "#{res.error}"
       end
 
       return res
