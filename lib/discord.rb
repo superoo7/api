@@ -15,9 +15,9 @@ class Discord
       begin
         result = JSON.parse(result)
         if result['retry_after']
-          wait_seconds = result['retry_after'].to_f / 1000
+          wait_seconds = 1 + result['retry_after'].to_f / 1000
           puts "Rate limitted, retry after #{wait_seconds}s"
-          sleep(wait_seconds + 1)
+          sleep(wait_seconds)
           self.send(content)
         else
           puts "UNKNOWN ERROR - #{result}"

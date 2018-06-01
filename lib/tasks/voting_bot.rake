@@ -34,27 +34,19 @@ else
   # This script should not run if POWER_TOTAL_POST < 0
   (TOTAL_VP_TO_USE - (TOTAL_VP_TO_USE * (100 - current_voting_power) / 20)) * 0.8
 end
-POWER_TOTAL_COMMENT = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
-POWER_TOTAL_MODERATOR = TOTAL_VP_TO_USE * 0.1 # 10% of total VP
-# POWER_TOTAL_COMMENT = POWER_TOTAL_POST * 0.125 # 10% of total VP
-# POWER_TOTAL_MODERATOR = POWER_TOTAL_POST * 0.125 # 10% of total VP
+POWER_TOTAL_COMMENT = POWER_TOTAL_POST * 0.125 # 10% of total VP
+POWER_TOTAL_MODERATOR = POWER_TOTAL_POST * 0.125 # 10% of total VP
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 1000
 HUNT_DISTRIBUTION_VOTE = 40000.0
 HUNT_DISTRIBUTION_RESTEEM = 20000.0
 
 def get_minimum_power(size)
-  minimum = if size < 20
-    10
-  elsif size < 40
-    5
-  elsif size < 100
-    2
-  elsif size  < 200
-    1
-  else
-    0.1
-  end
+  min = POWER_TOTAL_POST / (size * 10.0)
+  min = 100 if min > 100
+  min = 0.01 if min < 0.01
+
+  min
 end
 
 # def evenly_distributed_array(size)
@@ -99,18 +91,18 @@ def natural_distributed_array(size)
   minimum = get_minimum_power(size)
 
   selected = nil
-  (1..50).each do |t|
+  (1..1000).each do |t|
     test_array = natural_distribution_test(size, t)
-    if test_array.any? { |n| n > POWER_MAX || n < minimum }
+    if test_array.any? { |n| n > POWER_MAX || n < minimum ||  n.nan? }
       next
     else
-      selected = test_array
+      selected = test_array # first match, steepest possible
       break
     end
   end
 
   if selected.nil?
-    Array.new(size, POWER_TOTAL_POST / size) # FFS: linear if POWER_TOTAL_POST is too small
+    raise "Distribution is not possible - POWER_TOTAL_POST: #{POWER_TOTAL_POST} / size: #{size}"
   else
     selected.map { |n| n.round(2) }
   end
@@ -230,9 +222,17 @@ task :voting_bot => :environment do |t, args|
     end
 
     if post.is_active
-      votes = with_retry(3) do
-        api.get_content(post.author, post.permlink)['result']['active_votes']
+      result = with_retry(3) do
+        api.get_content(post.author, post.permlink)['result']
       end
+
+      if result['title'].blank?
+        posts_to_remove << post.id
+        logger.log "--> REMOVE: No blockchain data on Steem -------------->>> ACTION REQUIRED"
+        next
+      end
+
+      votes = result['active_votes']
 
       logger.log "--> VOTE COUNT: #{votes.size}"
       votes.each do |vote|
@@ -252,10 +252,6 @@ task :voting_bot => :environment do |t, args|
         api.get_reblogged_by(post.author, post.permlink)['result']
       end
 
-      # FFS : just ignore this for now
-      if resteemed_by.nil?
-        resteemed_by = []
-      end
       logger.log "--> RESTEEM COUNT: #{resteemed_by.size}"
       resteemed_by.each do |username|
         has_resteemed[username] = true unless has_resteemed[username]
@@ -295,6 +291,9 @@ task :voting_bot => :environment do |t, args|
     end # comments.each
   end # posts.each
 
+  posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
+  vp_distribution = natural_distributed_array(posts.size)
+
   # 1. HUNT voting distribution
   total_rshares = rshares_by_users.values.sum.to_f
   rshares_by_users = rshares_by_users.sort_by {|k,v| v}.reverse
@@ -324,16 +323,13 @@ task :voting_bot => :environment do |t, args|
   # TODO: uncomment it for actual distribution
   # logger.log "Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users"
 
-  posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
-
   logger.log "\n==\n========== VOTING ON #{posts.size} POSTS with #{POWER_TOTAL_POST.round(2)}% VP ==========\n==", true
 
-  vp_distribution = natural_distributed_array(posts.size)
   posts.each_with_index do |post, i|
     ranking = i + 1
     voting_power = vp_distribution[ranking - 1]
 
-    logger.log "Voting on ##{ranking} (#{voting_power}%): @#{post.author}/#{post.permlink}"
+    logger.log "Voting on ##{ranking} (#{voting_power.round(2)}%): @#{post.author}/#{post.permlink}"
     if posts_to_skip.include?(post.id)
       logger.log "--> SKIPPED_POST"
     else
