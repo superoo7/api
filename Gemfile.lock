@@ -71,7 +71,7 @@ GEM
     chronic (0.10.2)
     coderay (1.1.2)
     concurrent-ruby (1.0.5)
-    connection_pool (2.2.1)
+    connection_pool (2.2.2)
     crass (1.0.4)
     dotenv (2.4.0)
     dotenv-rails (2.4.0)
@@ -112,7 +112,7 @@ GEM
       connection_pool (~> 2.2)
     net-scp (1.2.1)
       net-ssh (>= 2.6.5)
-    net-ssh (4.2.0)
+    net-ssh (5.0.0)
     nio4r (2.3.1)
     nokogiri (1.8.2)
       mini_portile2 (~> 2.3.0)
@@ -125,7 +125,7 @@ GEM
     rack-cors (1.0.2)
     rack-test (1.0.0)
       rack (>= 1.0, < 3)
-    radiator (0.4.1)
+    radiator (0.4.2pre1)
       awesome_print (~> 1.7, >= 1.7.0)
       bitcoin-ruby (~> 0.0, >= 0.0.11)
       ffi (~> 1.9, >= 1.9.18)
@@ -199,7 +199,7 @@ DEPENDENCIES
   pry
   puma (~> 3.7)
   rack-cors
-  radiator
+  radiator (= 0.4.2pre1)
   rails (~> 5.1)
   tzinfo-data
   whenever
