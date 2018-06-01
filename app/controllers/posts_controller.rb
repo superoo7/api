@@ -78,14 +78,19 @@ class PostsController < ApplicationController
 
   # GET /posts/exists
   def exists
-    result = exists?(params[:url])
-
-    if result == 'INVALID'
-      render json: { result: 'INVALID' } and return
+    ecommerce_domains = [
+      /amazon\.com/,
+      /ebay\.com/
+    ]
+    if ecommerce_domains.any? { |d| params[:url] =~ d }
+      render json: { result: "We don't accept e-commerce sites. Please check our Posting Guideline." } and return
     end
 
-    if result
-      render json: { result: 'ALREADY_EXISTS' }
+    result = exists?(params[:url])
+    if result == 'INVALID'
+      render json: { result: 'Invalid URL. Please include http or https at the beginning.' }
+    elsif result
+      render json: { result: 'The product link already exists.' }
     else
       render json: { result: 'OK' }
     end
