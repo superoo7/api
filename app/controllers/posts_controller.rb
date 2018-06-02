@@ -249,7 +249,8 @@ class PostsController < ApplicationController
         /shopify\.com/,
         /rakuten\.com/,
         /thinkgeek\.com/,
-        /uncommongoods\.com/
+        /uncommongoods\.com/,
+        /trendyproductsshop\.com/
       ]
       ecommerce_domains.any? { |d| url =~ d }
     end
