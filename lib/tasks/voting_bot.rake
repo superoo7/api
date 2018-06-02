@@ -221,18 +221,18 @@ task :voting_bot => :environment do |t, args|
       next
     end
 
-    if post.is_active
-      result = with_retry(3) do
-        api.get_content(post.author, post.permlink)['result']
-      end
+    # Get data from blockchain
+    result = with_retry(3) do
+      api.get_content(post.author, post.permlink)['result']
+    end
+    votes = result['active_votes']
 
+    if post.is_active
       if result['title'].blank?
         posts_to_remove << post.id
         logger.log "--> REMOVE: No blockchain data on Steem -------------->>> ACTION REQUIRED"
         next
       end
-
-      votes = result['active_votes']
 
       logger.log "--> VOTE COUNT: #{votes.size}"
       votes.each do |vote|
@@ -265,6 +265,8 @@ task :voting_bot => :environment do |t, args|
       api.get_content_replies(post.author, post.permlink)['result']
     end
     # logger.log "----> #{comments.size} comments returned"
+
+    review_commnet_added = {}
     comments.each do |comment|
       json_metadata = JSON.parse(comment['json_metadata']) rescue {}
 
@@ -278,14 +280,24 @@ task :voting_bot => :environment do |t, args|
         if is_moderator
           if  User::MODERATOR_ACCOUNTS.include?(comment['author'])
             moderators_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
-            logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Moderator comment: @#{comment['author']}/#{comment['permlink']}"
+            logger.log "--> #{should_skip ? 'SKIP ALREADY_VOTED' : 'ADDED'} Moderator comment: @#{comment['author']}"
           else
             logger.log "--> WTF!!!!! Moderator comment: @#{comment['author']}/#{comment['permlink']}"
           end
         # 2. Review comments
         elsif is_review
-          review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
-          logger.log "--> #{should_skip ? 'SKIP' : 'FOUND'} Review comment: @#{comment['author']}/#{comment['permlink']}"
+          if review_commnet_added[comment['author']]
+            logger.log "--> REMOVE DUPLICATED_REVIEW_COMMENT by user: @#{comment['author']}"
+          # TODO: Uncomment after announcement
+          # elsif comment['body'].size < 80
+          #   logger.log "--> REMOVE TOO_SHORT_REVIEW_COMMENT by user: @#{comment['author']}"
+          # elsif !votes.any? { |v| v['voter'] == comment['author'] && v['percent'] > 5000 }
+          #   logger.log "--> REMOVE NOT_VOTED_REVIEW_COMMENT by user: @#{comment['author']}"
+          else
+            review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
+            review_commnet_added[comment['author']] = true
+            logger.log "--> #{should_skip ? 'SKIP ALREADY_VOTED' : 'ADDED'} Review comment: @#{comment['author']}"
+          end
         end
       end
     end # comments.each
