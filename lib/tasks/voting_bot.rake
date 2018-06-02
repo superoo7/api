@@ -356,9 +356,9 @@ task :voting_bot => :environment do |t, args|
     else
       sleep(20) unless TEST_MODE
       res = vote(post.author, post.permlink, voting_power)
-      logger.log "--> VOTED_POST: #{res.result.try(:id) || res.error}"
+      logger.log "--> VOTED_POST: #{res.try(:result).try(:id) || res.try(:error)}"
       res = comment(post.author, post.permlink, ranking)
-      logger.log "--> COMMENTED: #{res.result.try(:id) || res.error}", true
+      logger.log "--> COMMENTED: #{res.try(:result).try(:id) || res.try(:error)}", true
     end
   end
 
@@ -373,7 +373,7 @@ task :voting_bot => :environment do |t, args|
     else
       sleep(3) unless TEST_MODE
       res = vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> VOTED_REVIEW: #{res.result.try(:id) || res.error}", true
+      logger.log "--> VOTED_REVIEW: #{res.try(:result).try(:id) || res.try(:error)}", true
     end
   end
 
@@ -388,7 +388,7 @@ task :voting_bot => :environment do |t, args|
     else
       sleep(3) unless TEST_MODE
       res = vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> VOTED_MODERATOR: #{res.result.try(:id) || res.error}", true
+      logger.log "--> VOTED_MODERATOR: #{res.try(:result).try(:id) || res.try(:error)}", true
     end
   end
 
