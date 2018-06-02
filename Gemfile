@@ -19,7 +19,7 @@ gem 'rack-cors'
 
 gem 'whenever', require: false
 gem 'dotenv-rails'
-gem 'radiator', '0.4.2pre1'
+gem 'radiator'
 gem 'will_paginate'
 gem 'bugsnag'
 

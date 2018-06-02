@@ -125,7 +125,7 @@ GEM
     rack-cors (1.0.2)
     rack-test (1.0.0)
       rack (>= 1.0, < 3)
-    radiator (0.4.2pre1)
+    radiator (0.4.2)
       awesome_print (~> 1.7, >= 1.7.0)
       bitcoin-ruby (~> 0.0, >= 0.0.11)
       ffi (~> 1.9, >= 1.9.18)
@@ -199,7 +199,7 @@ DEPENDENCIES
   pry
   puma (~> 3.7)
   rack-cors
-  radiator (= 0.4.2pre1)
+  radiator
   rails (~> 5.1)
   tzinfo-data
   whenever
