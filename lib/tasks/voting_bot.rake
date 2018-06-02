@@ -108,7 +108,7 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  def vote(author, permlink, power)
+  def do_vote(author, permlink, power)
     tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
     vote = {
       type: :vote,
@@ -127,7 +127,7 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  def comment(author, permlink, rank)
+  def do_comment(author, permlink, rank)
     msg = "### Congratulation! Your hunt was ranked in #{rank.ordinalize} place on #{formatted_date(Date.yesterday)} on Steemhunt.\n" +
       "We have upvoted your post for your contribution within our community.\n" +
       "Thanks again and look forward to seeing your next hunt!\n\n" +
@@ -294,10 +294,10 @@ task :voting_bot => :environment do |t, args|
       logger.log "--> SKIPPED_POST (#{ranking}/#{posts_size})"
     else
       sleep(20) unless TEST_MODE
-      res = vote(post.author, post.permlink, voting_power)
-      logger.log "--> VOTED_POST: #{res.try(:result).try(:id) || res.try(:error)}"
-      res = comment(post.author, post.permlink, ranking)
-      logger.log "--> COMMENTED: #{res.try(:result).try(:id) || res.try(:error)}", true
+      res = do_vote(post.author, post.permlink, voting_power)
+      logger.log "--> VOTED_POST: #{res.inspect}"
+      res = do_comment(post.author, post.permlink, ranking)
+      logger.log "--> COMMENTED: #{res.inspect}", true
     end
   end
 
@@ -312,8 +312,8 @@ task :voting_bot => :environment do |t, args|
       logger.log "--> SKIPPED_REVIEW", true
     else
       sleep(3) unless TEST_MODE
-      res = vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> VOTED_REVIEW: #{res.try(:result).try(:id) || res.try(:error)}", true
+      res = do_vote(comment[:author], comment[:permlink], voting_power)
+      logger.log "--> VOTED_REVIEW: #{res.inspect}", true
     end
   end
 
@@ -328,8 +328,8 @@ task :voting_bot => :environment do |t, args|
       logger.log "--> SKIPPED_MODERATOR", true
     else
       sleep(3) unless TEST_MODE
-      res = vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> VOTED_MODERATOR: #{res.try(:result).try(:id) || res.try(:error)}", true
+      res = do_vote(comment[:author], comment[:permlink], voting_power)
+      logger.log "--> VOTED_MODERATOR: #{res.inspect}", true
     end
   end
 

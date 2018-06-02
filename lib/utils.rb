@@ -10,11 +10,6 @@ def with_retry(limit)
   limit.times do |i|
     begin
       res = yield i
-      if res.try(:error)
-        puts res.error
-        raise "#{res.error}"
-      end
-
       return res
     rescue => e
       puts e
