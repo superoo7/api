@@ -302,6 +302,8 @@ task :voting_bot => :environment do |t, args|
           #   logger.log "--> REMOVE TOO_SHORT_REVIEW_COMMENT by user: @#{comment['author']}"
           # elsif !votes.any? { |v| v['voter'] == comment['author'] && v['percent'] > 5000 }
           #   logger.log "--> REMOVE NOT_VOTED_REVIEW_COMMENT by user: @#{comment['author']}"
+          # elsif comment['author'] == post.author
+          #   logger.log "--> REMOVE SELF_REVIEW_COMMENT by user: @#{comment['author']}"
           else
             review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
             review_commnet_added[comment['author']] = true
