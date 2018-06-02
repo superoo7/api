@@ -118,8 +118,12 @@ def vote(author, permlink, power)
     weight: (power * 100).to_i
   }
   tx.operations << vote
-  with_retry(3) do
-    tx.process(!TEST_MODE)
+  begin
+    with_retry(3) do
+      tx.process(!TEST_MODE)
+    end
+  rescue => e
+    SLogger.log "FAILED VOTING: @#{author}/#{permlink} / POWER: #{power}"
   end
 end
 
@@ -148,7 +152,12 @@ def comment(author, permlink, rank)
     }.to_json
   }
   tx.operations << comment
-  tx.process(!TEST_MODE)
+
+  begin
+    tx.process(!TEST_MODE)
+  rescue => e
+    SLogger.log "FAILED COMMENT: @#{author}/#{permlink} / RANK: #{rank}"
+  end
 end
 
 def run_and_retry_on_exception(cmd, tries: 0, max_tries: 3, delay: 10)
