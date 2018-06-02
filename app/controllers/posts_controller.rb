@@ -79,11 +79,21 @@ class PostsController < ApplicationController
   # GET /posts/exists
   def exists
     ecommerce_domains = [
-      /amazon\.com/,
-      /ebay\.com/
+      /alibaba\.com/,
+      /aliexpress\.com/,
+      /amazon\.co/,
+      /awesomeinventions\.com/,
+      /ebay\.com/,
+      /etsy\.com/,
+      /flipkart\.com/,
+      /groupon\.com/,
+      /jd\.com/,
+      /shopify\.com/,
+      /rakuten\.com/,
+      /thinkgeek\.com/,
     ]
     if ecommerce_domains.any? { |d| params[:url] =~ d }
-      render json: { result: "We don't accept e-commerce sites. Please check our Posting Guideline." } and return
+      render json: { result: "We don't accept e-commerce or affiliate sites. Please check our posting guidelines." } and return
     end
 
     result = exists?(params[:url])
