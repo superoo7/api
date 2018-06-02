@@ -34,8 +34,8 @@ else
   # This script should not run if POWER_TOTAL_POST < 0
   (TOTAL_VP_TO_USE - (TOTAL_VP_TO_USE * (100 - current_voting_power) / 20)) * 0.8
 end
-POWER_TOTAL_COMMENT = POWER_TOTAL_POST * 0.125 # 10% of total VP
-POWER_TOTAL_MODERATOR = POWER_TOTAL_POST * 0.125 # 10% of total VP
+POWER_TOTAL_COMMENT = POWER_TOTAL_POST * 0.125 # 10% of total VP (Relative to posting total)
+POWER_TOTAL_MODERATOR = TOTAL_VP_TO_USE * 0.10 # 10% of total VP (Fixed)
 POWER_MAX = 100.0
 MAX_POST_VOTING_COUNT = 1000
 HUNT_DISTRIBUTION_VOTE = 40000.0
