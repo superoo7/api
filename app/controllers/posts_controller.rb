@@ -118,7 +118,7 @@ class PostsController < ApplicationController
 
   # DELETE /posts/@:author/:permlink
   def destroy
-    @post.destroy
+    @post.update! { is_active: false, is_verified: false }
 
     render json: { head: :no_content }
   end

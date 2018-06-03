@@ -27,7 +27,7 @@ task :voting_bot => :environment do |t, args|
   end
 
   TEST_MODE = false # Should be false on production
-  TOTAL_VP_TO_USE = 1080.0
+  TOTAL_VP_TO_USE = 1000.0
   POWER_TOTAL_POST = if TEST_MODE || current_voting_power > 99.99
     TOTAL_VP_TO_USE * 0.8
   else
@@ -36,8 +36,8 @@ task :voting_bot => :environment do |t, args|
     # This script should not run if POWER_TOTAL_POST < 0
     (TOTAL_VP_TO_USE - (TOTAL_VP_TO_USE * (100 - current_voting_power) / 20)) * 0.8
   end
-  POWER_TOTAL_COMMENT = POWER_TOTAL_POST * 0.125 # 10% of total VP (Relative to posting total)
-  POWER_TOTAL_MODERATOR = TOTAL_VP_TO_USE * 0.10 # 10% of total VP (Fixed)
+  POWER_TOTAL_COMMENT = POWER_TOTAL_POST * 0.125 # 10% of total VP
+  POWER_TOTAL_MODERATOR = POWER_TOTAL_POST * 0.125 # 10% of total VP
   POWER_MAX = 100.0
   MAX_POST_VOTING_COUNT = 1000
 
@@ -242,6 +242,7 @@ task :voting_bot => :environment do |t, args|
     # logger.log "----> #{comments.size} comments returned"
 
     review_commnet_added = {}
+    mod_comment_added = {}
     comments.each do |comment|
       json_metadata = JSON.parse(comment['json_metadata']) rescue {}
 
@@ -254,21 +255,26 @@ task :voting_bot => :environment do |t, args|
         # 1. Moderator comments
         if is_moderator
           if  User::MODERATOR_ACCOUNTS.include?(comment['author'])
-            moderators_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
-            logger.log "--> #{should_skip ? 'SKIP ALREADY_VOTED' : 'ADDED'} Moderator comment: @#{comment['author']}"
+            if mod_comment_added[comment['author']]
+              logger.log "--> REMOVE DUPLICATED_MOD_COMMENT: @#{comment['author']}"
+            else
+              moderators_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
+              mod_comment_added[comment['author']] = true
+              logger.log "--> #{should_skip ? 'SKIP ALREADY_VOTED' : 'ADDED'} Mod comment: @#{comment['author']}"
+            end
           else
-            logger.log "--> WTF!!!!! Moderator comment: @#{comment['author']}/#{comment['permlink']}"
+            logger.log "--> WTF!!!!! Mod comment: @#{comment['author']}/#{comment['permlink']}"
           end
         # 2. Review comments
         elsif is_review
           if review_commnet_added[comment['author']]
-            logger.log "--> REMOVE DUPLICATED_REVIEW_COMMENT by user: @#{comment['author']}"
+            logger.log "--> REMOVE DUPLICATED_REVIEW_COMMENT: @#{comment['author']}"
           elsif comment['body'].size < 80
-            logger.log "--> REMOVE TOO_SHORT_REVIEW_COMMENT by user: @#{comment['author']}"
+            logger.log "--> REMOVE TOO_SHORT_REVIEW_COMMENT: @#{comment['author']}"
           elsif !votes.any? { |v| v['voter'] == comment['author'] && v['percent'] >= 5000 }
-            logger.log "--> REMOVE NOT_VOTED_REVIEW_COMMENT by user: @#{comment['author']}"
+            logger.log "--> REMOVE NOT_VOTED_REVIEW_COMMENT: @#{comment['author']}"
           elsif comment['author'] == post.author
-            logger.log "--> REMOVE SELF_REVIEW_COMMENT by user: @#{comment['author']}"
+            logger.log "--> REMOVE SELF_REVIEW_COMMENT: @#{comment['author']}"
           else
             review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
             review_commnet_added[comment['author']] = true
