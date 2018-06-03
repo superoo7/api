@@ -147,9 +147,9 @@ class PostsController < ApplicationController
 
   # PATCH /moderate/@:author/:permlink
   def moderate
-    if @post.verified_by != @current_user.username
+    if @post.verified_by != @current_user.username && !@current_user.admin?
       render json: { error: "This product is in review by #{@post.verified_by}" }, status: :forbidden
-    elsif @post.update!(post_moderate_params)
+    elsif @post.update!(post_moderate_params.merge(verified_by: @current_user.username))
       render_moderator_fields
     else
       render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
