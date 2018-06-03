@@ -265,7 +265,7 @@ task :voting_bot => :environment do |t, args|
             logger.log "--> REMOVE DUPLICATED_REVIEW_COMMENT by user: @#{comment['author']}"
           elsif comment['body'].size < 80
             logger.log "--> REMOVE TOO_SHORT_REVIEW_COMMENT by user: @#{comment['author']}"
-          elsif !votes.any? { |v| v['voter'] == comment['author'] && v['percent'] > 5000 }
+          elsif !votes.any? { |v| v['voter'] == comment['author'] && v['percent'] >= 5000 }
             logger.log "--> REMOVE NOT_VOTED_REVIEW_COMMENT by user: @#{comment['author']}"
           elsif comment['author'] == post.author
             logger.log "--> REMOVE SELF_REVIEW_COMMENT by user: @#{comment['author']}"
