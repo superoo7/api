@@ -37,7 +37,7 @@ task :voting_bot => :environment do |t, args|
     (TOTAL_VP_TO_USE - (TOTAL_VP_TO_USE * (100 - current_voting_power) / 20)) * 0.8
   end
   POWER_TOTAL_COMMENT = POWER_TOTAL_POST * 0.125 # 10% of total VP
-  POWER_TOTAL_MODERATOR = POWER_TOTAL_POST * 0.125 # 10% of total VP
+  POWER_PER_MOD_COMMENT = 0.60 # 120% on 200 posts, 240% on 400 posts
   POWER_MAX = 100.0
   MAX_POST_VOTING_COUNT = 1000
 
@@ -324,10 +324,9 @@ task :voting_bot => :environment do |t, args|
   end
 
   moderators_comments_size = moderators_comments.size
-  logger.log "\n==\n========== VOTING ON #{moderators_comments_size} MODERATOR COMMENTS with #{POWER_TOTAL_MODERATOR.round(2)}% VP ==========\n==", true
+  logger.log "\n==\n========== VOTING ON #{moderators_comments_size} MODERATOR COMMENTS with #{moderators_comments_size *  POWER_PER_MOD_COMMENT}% VP in total ==========\n==", true
 
-  voting_power = (POWER_TOTAL_MODERATOR / moderators_comments_size).floor(2)
-  voting_power = 100.0 if voting_power > 100
+  voting_power = POWER_PER_MOD_COMMENT
   moderators_comments.each_with_index do |comment, i|
     logger.log "[#{i + 1} / #{moderators_comments_size}] Voting on moderator comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}", true
     if comment[:should_skip]
