@@ -77,8 +77,8 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
         total_hunt_accumulated += hunt_balance
       end
 
-      logger.log "| @#{j['delegator']} | #{formatted_number(j['vests'])} VESTS (#{formatted_number(j['sp'].round)} SP) | " +
-        "#{(proportion * 100).round(2)}% | #{formatted_number(steem, 3)} | " +
+      logger.log "| @#{j['delegator']} | #{formatted_number(j['vests'], 0)} VESTS (#{formatted_number(j['sp'].round, 0)} SP) | " +
+        "#{(proportion * 100).round(3)}% | #{formatted_number(steem, 3)} | " +
         "#{formatted_number(hunt, 0)} | #{formatted_number(hunt_balance, 0)} |"
     end
   end
@@ -94,7 +94,7 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
       tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_PAY_ACTIVE_KEY'])
       tx.operations << t
       result = tx.process(true)
-      logger.log "Sent to #{t[:to]} - #{t[:amount]} STEEM: #{result.try(:id)}", true
+      logger.log "Sent to @#{t[:to]} - #{t[:amount]} STEEM", true
     end
   end
 end
