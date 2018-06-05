@@ -17,12 +17,12 @@ class PostsController < ApplicationController
     end
 
     if params[:sort] == 'unverified'
-      @posts = @posts.where(is_verified: false)
+      @posts = @posts.where(is_verified: false).order('created_at ASC')
     else
-      @posts = @posts.where(is_active: true)
+      @posts = @posts.where(is_active: true).order(@sort)
     end
 
-    render json: @posts.order(@sort)
+    render json: @posts
   end
 
   def top
