@@ -307,15 +307,14 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  review_comments_size = review_comments.size
-  logger.log "\n==\n========== VOTING ON #{review_comments_size} REVIEW COMMENTS with #{POWER_TOTAL_COMMENT.round(2)}% VP =========="
+  logger.log "\n==\n========== VOTING ON #{review_comments.size} REVIEW COMMENTS with #{POWER_TOTAL_COMMENT.round(2)}% VP =========="
   review_comments = review_comments.sample(100)
-  logger.log "Pick 100 review comments randomly\n=="
+  logger.log "Pick 100 review comments randomly\n==", true
 
-  voting_power = (POWER_TOTAL_COMMENT / review_comments_size).floor(2)
+  voting_power = (POWER_TOTAL_COMMENT / review_comments.size).floor(2)
   voting_power = 100.0 if voting_power > 100
   review_comments.each_with_index do |comment, i|
-    logger.log "[#{i + 1} / #{review_comments_size}] Voting on review comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}", true
+    logger.log "[#{i + 1} / #{review_comments.size}] Voting on review comment (#{voting_power}%): @#{comment[:author]}/#{comment[:permlink]}", true
     if comment[:should_skip]
       logger.log "--> SKIPPED_REVIEW", true
     else
