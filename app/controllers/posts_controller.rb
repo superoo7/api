@@ -94,7 +94,13 @@ class PostsController < ApplicationController
 
   # POST /posts
   def create
-    @post = Post.new(post_params)
+    @post = Post.find_by(author: post_params[:author], post_params[:permlink])
+    if @post
+      @post.is_active = true
+      @post.is_verified = false
+    else
+      @post = Post.new(post_params)
+    end
 
     if exists?(@post.url) # if 'INVALID' or true
       render json: { error: 'The product already exists on Steemhunt.' }, status: :unprocessable_entity and return
