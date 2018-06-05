@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_05_29_081029) do
+ActiveRecord::Schema.define(version: 2018_06_05_141319) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -20,7 +20,7 @@ ActiveRecord::Schema.define(version: 2018_05_29_081029) do
     t.string "eth_tx_hash", limit: 66
     t.decimal "amount", null: false
     t.string "memo"
-    t.datetime "created_at", default: "2018-05-20 15:00:00", null: false
+    t.datetime "created_at", null: false
     t.string "sender"
     t.string "receiver"
     t.index ["receiver"], name: "index_hunt_transactions_on_receiver"

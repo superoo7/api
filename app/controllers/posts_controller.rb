@@ -94,7 +94,7 @@ class PostsController < ApplicationController
 
   # POST /posts
   def create
-    @post = Post.find_by(author: post_params[:author], post_params[:permlink])
+    @post = Post.find_by(author: post_params[:author], permlink: post_params[:permlink])
     if @post
       @post.is_active = true
       @post.is_verified = false
