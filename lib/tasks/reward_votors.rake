@@ -6,9 +6,6 @@ desc 'Reward Voters'
 task :reward_voters => :environment do |t, args|
   TEST_MODE = true # Should be false on production
   HUNT_DISTRIBUTION_VOTE = 40000.0
-  PAYOUT_DECLINED = [
-    'steemhunt', 'utopian-io'
-  ]
 
   logger = SLogger.new
   api = Radiator::Api.new
@@ -48,11 +45,6 @@ task :reward_voters => :environment do |t, args|
 
       if other_bot_ids.include?(vote['voter'])
         logger.log "----> SKIP OTHER_BOT: #{vote['voter']}"
-        next
-      end
-
-      if PAYOUT_DECLINED.include?(vote['voter'])
-        logger.log "----> SKIP PAYOUT_DECLINED: #{vote['voter']}"
         next
       end
 
