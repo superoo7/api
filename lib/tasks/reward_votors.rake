@@ -12,7 +12,7 @@ task :reward_voters => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  logger.log "\n==\n========== #{HUNT_DISTRIBUTION_VOTE} HUNT DISTRIBUTION ON VOTERS ==========\n==", true
+  logger.log "\n==========\n#{HUNT_DISTRIBUTION_VOTE} HUNT DISTRIBUTION ON VOTERS \n=========", true
 
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
     where(is_active: true, is_verified: true).
@@ -59,14 +59,14 @@ task :reward_voters => :environment do |t, args|
   only_users = {}
   rshares_by_users.each do |k, v|
     if u = User.find_by(username: k)
-      only_users[k] = v if u.first_logged_in?
+      only_users[k] = v if u.first_logged_in? && u.dau?
     end
   end
 
   total_rshares = only_users.values.sum.to_f
   only_users = only_users.sort_by {|k,v| v}.reverse
 
-  logger.log "\n==\n========== FILTERED OUT ONLY STEEMHUNT USERS: #{only_users.size} VOTERS ==========\n==", true
+  logger.log "\n==========\nFILTERED OUT ONLY STEEMHUNT USERS: #{only_users.size} VOTERS\n=========", true
 
   total_hunt_distributed = 0
   only_users.each do |pair|
@@ -83,5 +83,5 @@ task :reward_voters => :environment do |t, args|
     end
   end
 
-  logger.log "\n==\n========== FINISHED #{total_hunt_distributed} HUNT DISTRIBUTION ON #{only_users.size} / #{rshares_by_users.size} VOTERS ==========", true
+  logger.log "\n==========\nFINISHED #{total_hunt_distributed} HUNT DISTRIBUTION ON #{only_users.size} / #{rshares_by_users.size} VOTERS\n=========", true
 end

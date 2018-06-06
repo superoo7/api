@@ -12,12 +12,12 @@ task :reward_resteemers => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  logger.log "\n==\n========== #{HUNT_DISTRIBUTION_RESTEEM} HUNT DISTRIBUTION ON RESTEEMERS ==========", true
+  logger.log "\n==========\n #{HUNT_DISTRIBUTION_RESTEEM} HUNT DISTRIBUTION ON RESTEEMERS"
 
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
     where(is_active: true, is_verified: true).
     order('payout_value DESC')
-  logger.log "Total #{posts.count} verified posts founds\n=="
+  logger.log "Total #{posts.count} verified posts founds\n==========", true
 
   has_resteemed = {}
   bid_bot_ids = get_bid_bot_ids
@@ -29,10 +29,10 @@ task :reward_resteemers => :environment do |t, args|
       api.get_reblogged_by(post.author, post.permlink)['result']
     end
 
-    logger.log "--> RESTEEM COUNT: #{resteemed_by.size}"
+    logger.log "--> RESTEEM COUNT: #{resteemed_by}"
     resteemed_by.each do |username|
       if has_resteemed[username]
-        logger.log "--> SKIP ALREADY_RESTEEMED_ONCE: @#{username}"
+        logger.log "--> SKIP ALREADY_RT_ONCE: @#{username}"
         next
       end
 
@@ -46,7 +46,15 @@ task :reward_resteemers => :environment do |t, args|
         next
       end
 
-      has_resteemed[username] = true
+      if u = User.find_by(username: username)
+        if u.first_logged_in? && u.dau?
+          has_resteemed[username] = true
+        else
+          logger.log "--> SKIP NOT_ACTIVE_USER: @#{username}"
+        end
+      else
+        logger.log "--> SKIP NOT_STEEMHUNT_USER: @#{username}"
+      end
     end
   end
 
@@ -58,8 +66,8 @@ task :reward_resteemers => :environment do |t, args|
   end
 
   if TEST_MODE
-    logger.log "TEST - Distributed #{hunt_per_resteem} HUNT to:\n#{resteemed_users}", true
+    logger.log "\n==========\n TEST - Distributed #{hunt_per_resteem} HUNT to each of #{resteemed_users.size} users\n==========", true
   else
-    logger.log "Distributed #{hunt_per_resteem} HUNT to:\n#{resteemed_users}", true
+    logger.log "\n==========\n Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users\n==========", true
   end
 end
