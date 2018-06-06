@@ -20,6 +20,8 @@ task :reward_resteemers => :environment do |t, args|
   logger.log "Total #{posts.count} verified posts founds\n=="
 
   has_resteemed = {}
+  bid_bot_ids = get_bid_bot_ids
+  other_bot_ids = get_other_bot_ids
   posts.each_with_index do |post, i|
     logger.log "@#{post.author}/#{post.permlink}"
 
@@ -29,7 +31,22 @@ task :reward_resteemers => :environment do |t, args|
 
     logger.log "--> RESTEEM COUNT: #{resteemed_by.size}"
     resteemed_by.each do |username|
-      has_resteemed[username] = true unless has_resteemed[username]
+      if has_resteemed[username]
+        logger.log "--> SKIP ALREADY_RESTEEMED_ONCE: @#{username}"
+        next
+      end
+
+      if bid_bot_ids.include?(username)
+        logger.log "--> SKIP BID_BOT: @#{username}"
+        next
+      end
+
+      if other_bot_ids.include?(username)
+        logger.log "--> SKIP OTHER_BOT: @#{username}"
+        next
+      end
+
+      has_resteemed[username] = true
     end
   end
 

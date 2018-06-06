@@ -9,6 +9,10 @@ class User < ApplicationRecord
     'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem', 'jayplayco'
   ]
 
+  def first_logged_in?
+    !encrypted_token.blank?
+  end
+
   def admin?
     ADMIN_ACCOUNTS.include?(username)
   end
