@@ -189,7 +189,7 @@ task :voting_bot => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  logger.log "\n==\n========== VOTING STARTS with #{(POWER_TOTAL_POST * 1.25).round(2)}% TOTAL VP - #{formatted_date(yesterday)} ==========", true
+  logger.log "\n==========\nVOTING STARTS with #{(POWER_TOTAL_POST * 1.25).round(2)}% TOTAL VP - #{formatted_date(yesterday)} ==========", true
   logger.log "Current voting power: #{current_voting_power(api)}%"
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                order('payout_value DESC').
@@ -289,25 +289,25 @@ task :voting_bot => :environment do |t, args|
   posts_size = posts.size
   vp_distribution = natural_distributed_array(posts_size)
 
-  logger.log "\n==\n========== VOTING ON #{posts_size} POSTS with #{POWER_TOTAL_POST.round(2)}% VP ==========\n==", true
+  logger.log "\n==========\nVOTING ON #{posts_size} POSTS with #{POWER_TOTAL_POST.round(2)}% VP\n==========", true
 
   posts.each_with_index do |post, i|
     ranking = i + 1
     voting_power = vp_distribution[ranking - 1]
 
-    logger.log "Voting on ##{ranking} / #{posts_size} (#{voting_power.round(2)}%): @#{post.author}/#{post.permlink}"
+    logger.log "Voting on ##{ranking} / #{posts_size} (#{voting_power.round(2)}%): @#{post.author}/#{post.permlink}", true
     if posts_to_skip.include?(post.id)
       logger.log "--> SKIPPED_POST (#{ranking}/#{posts_size})"
     else
       sleep(20) unless TEST_MODE
       res = do_vote(post.author, post.permlink, voting_power)
-      logger.log "--> VOTED_POST: #{res.inspect}"
+      # logger.log "--> VOTED_POST: #{res.inspect}"
       res = do_comment(post.author, post.permlink, ranking)
-      logger.log "--> COMMENTED: #{res.inspect}", true
+      # logger.log "--> COMMENTED: #{res.inspect}", true
     end
   end
 
-  logger.log "\n==\n========== VOTING ON #{review_comments.size} REVIEW COMMENTS with #{POWER_TOTAL_COMMENT.round(2)}% VP =========="
+  logger.log "\n==========\nVOTING ON #{review_comments.size} REVIEW COMMENTS with #{POWER_TOTAL_COMMENT.round(2)}% VP\n==========", true
   review_comments = review_comments.sample(100)
   logger.log "Pick 100 review comments randomly\n==", true
 
@@ -320,12 +320,12 @@ task :voting_bot => :environment do |t, args|
     else
       sleep(3) unless TEST_MODE
       res = do_vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> VOTED_REVIEW: #{res.inspect}", true
+      # logger.log "--> VOTED_REVIEW: #{res.inspect}", true
     end
   end
 
   moderators_comments_size = moderators_comments.size
-  logger.log "\n==\n========== VOTING ON #{moderators_comments_size} MODERATOR COMMENTS with #{moderators_comments_size *  POWER_PER_MOD_COMMENT}% VP in total ==========\n==", true
+  logger.log "\n==========\nVOTING ON #{moderators_comments_size} MODERATOR COMMENTS with #{moderators_comments_size *  POWER_PER_MOD_COMMENT}% VP in total\n==========", true
 
   voting_power = POWER_PER_MOD_COMMENT
   moderators_comments.each_with_index do |comment, i|
@@ -335,9 +335,9 @@ task :voting_bot => :environment do |t, args|
     else
       sleep(3) unless TEST_MODE
       res = do_vote(comment[:author], comment[:permlink], voting_power)
-      logger.log "--> VOTED_MODERATOR: #{res.inspect}", true
+      # logger.log "--> VOTED_MODERATOR: #{res.inspect}", true
     end
   end
 
-  logger.log "Votings Finished, #{current_voting_power(api)}% VP left", true
+  logger.log "\n==========\nVotings Finished, #{current_voting_power(api)}% VP left\n==========", true
 end
