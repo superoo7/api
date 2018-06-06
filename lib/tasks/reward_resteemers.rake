@@ -4,7 +4,7 @@ require 's_logger'
 
 desc 'Reward Resteemers'
 task :reward_resteemers => :environment do |t, args|
-  TEST_MODE = true # Should be false on production
+  TEST_MODE = false # Should be false on production
   HUNT_DISTRIBUTION_RESTEEM = 20000.0
 
   logger = SLogger.new
@@ -58,8 +58,8 @@ task :reward_resteemers => :environment do |t, args|
   end
 
   if TEST_MODE
-    logger.log "TEST - Distributed #{hunt_per_resteem} HUNT to:\n#{resteemed_users}"
+    logger.log "TEST - Distributed #{hunt_per_resteem} HUNT to:\n#{resteemed_users}", true
   else
-    logger.log "Distributed #{hunt_per_resteem} HUNT to:\n#{resteemed_users}"
+    logger.log "Distributed #{hunt_per_resteem} HUNT to:\n#{resteemed_users}", true
   end
 end
