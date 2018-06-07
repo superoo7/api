@@ -66,8 +66,13 @@ task :reward_resteemers => :environment do |t, args|
   end
 
   if TEST_MODE
-    logger.log "\n==========\n TEST - Distributed #{hunt_per_resteem} HUNT to each of #{resteemed_users.size} users\n==========", true
+    logger.log "\n==========\n TEST - Distributed #{hunt_per_resteem} HUNT to each of #{resteemed_users.size} users", true
   else
-    logger.log "\n==========\n Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users\n==========", true
+    logger.log "\n==========\n Distributed #{hunt_per_resteem} HUNT to #{resteemed_users.size} users", true
   end
+
+  resteemed_users.each do |u|
+    logger.log "@#{u}, ", false, false
+  end
+  logger.log "\n==========", true
 end

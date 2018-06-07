@@ -8,13 +8,21 @@ class SLogger
   end
 
   # Stack up logs and send in a bulk to avoid Discord rate limit
-  def log(text, flush = false)
+  def log(text, flush = false, newline = true)
     unless Rails.env.production?
-      puts text
+      if newline
+        puts text
+      else
+        print text
+      end
       return
     end
 
-    @stack += "#{text}\n"
+    if newline
+      @stack += "#{text}\n"
+    else
+      @stack += "#{text}"
+    end
 
     if @stack.size > BLOCK_SIZE || flush
       Discord.send(@stack)
