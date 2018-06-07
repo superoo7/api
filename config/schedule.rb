@@ -13,7 +13,7 @@ every :day, at: '12:30am' do
     "RAILS_ENV=#{environment} #{RAKE_PATH} sync_posts[1] && RAILS_ENV=#{environment} #{RAKE_PATH} sync_posts[8]"
 end
 
-every '0 4-23 * * *'
+every '0 4-23 * * *' do
   command "cd #{ROOT_DIR};RAILS_ENV=#{environment} #{RAKE_PATH} sync_posts[0]"
 end
 
