@@ -309,9 +309,9 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  logger.log "\n==========\nVOTING ON #{review_comments.size} REVIEW COMMENTS with #{POWER_TOTAL_COMMENT.round(2)}% VP\n==========", true
+  logger.log "\n==========\nVOTING ON #{review_comments.size} REVIEW COMMENTS with #{POWER_TOTAL_COMMENT.round(2)}% VP"
   review_comments = review_comments.sample(100)
-  logger.log "Pick 100 review comments randomly\n==", true
+  logger.log "Pick 100 review comments randomly\n==========", true
 
   voting_power = (POWER_TOTAL_COMMENT / review_comments.size).floor(2)
   voting_power = 100.0 if voting_power > 100
