@@ -27,12 +27,12 @@ task :reward_resteemers => :environment do |t, args|
 
     resteemed_by = with_retry(3) do
       api.get_reblogged_by(post.author, post.permlink)['result']
-    end
+    end.reject { |u| u == post.author }
 
-    logger.log "--> RESTEEM COUNT: #{resteemed_by}"
+    logger.log "--> RESTEEMED BY: #{resteemed_by}" unless resteemed_by.empty?
     resteemed_by.each do |username|
       if has_resteemed[username]
-        logger.log "--> SKIP ALREADY_RT_ONCE: @#{username}"
+        # logger.log "--> SKIP ALREADY_RT_ONCE: @#{username}"
         next
       end
 
