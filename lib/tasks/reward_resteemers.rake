@@ -4,7 +4,7 @@ require 's_logger'
 
 desc 'Reward Resteemers'
 task :reward_resteemers => :environment do |t, args|
-  TEST_MODE = true # Should be false on production
+  TEST_MODE = false # Should be false on production
   HUNT_DISTRIBUTION_RESTEEM = 20000.0
 
   logger = SLogger.new

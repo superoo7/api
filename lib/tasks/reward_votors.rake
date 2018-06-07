@@ -4,7 +4,7 @@ require 's_logger'
 
 desc 'Reward Voters'
 task :reward_voters => :environment do |t, args|
-  TEST_MODE = true # Should be false on production
+  TEST_MODE = false # Should be false on production
   HUNT_DISTRIBUTION_VOTE = 40000.0
 
   logger = SLogger.new
