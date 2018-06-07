@@ -189,13 +189,13 @@ task :voting_bot => :environment do |t, args|
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time
 
-  logger.log "\n==========\nVOTING STARTS with #{(POWER_TOTAL_POST * 1.25).round(2)}% TOTAL VP - #{formatted_date(yesterday)} ==========", true
+  logger.log "\n==========\nVOTING STARTS with #{(POWER_TOTAL_POST * 1.25).round(2)}% TOTAL VP - #{formatted_date(yesterday)}", true
   logger.log "Current voting power: #{current_voting_power(api)}%"
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                order('payout_value DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
 
-  logger.log "Total #{posts.size} posts found on #{formatted_date(yesterday)}\n==", true
+  logger.log "Total #{posts.size} posts found on #{formatted_date(yesterday)}\n==========", true
 
   review_comments = []
   moderators_comments =  []
@@ -285,19 +285,21 @@ task :voting_bot => :environment do |t, args|
     end # comments.each
   end # posts.each
 
+  original_post_size = posts.size
   posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
-  posts_size = posts.size
-  vp_distribution = natural_distributed_array(posts_size)
+  vp_distribution = natural_distributed_array(posts.size)
 
-  logger.log "\n==========\nVOTING ON #{posts_size} POSTS with #{POWER_TOTAL_POST.round(2)}% VP\n==========", true
+  logger.log "\n==========\n Total #{original_post_size} posts -> #{posts.size} accepted\n"
+  logger.log "Total #{review_comments.size} review comments\n"
+  logger.log "Voting start with\n - #{POWER_TOTAL_POST.round(2)}% VP on Posts\n - #{POWER_TOTAL_COMMENT.round(2)}% VP on Posts\n==========", true
 
   posts.each_with_index do |post, i|
     ranking = i + 1
     voting_power = vp_distribution[ranking - 1]
 
-    logger.log "Voting on ##{ranking} / #{posts_size} (#{voting_power.round(2)}%): @#{post.author}/#{post.permlink}", true
+    logger.log "Voting on ##{ranking} / #{posts.size} (#{voting_power.round(2)}%): @#{post.author}/#{post.permlink}", true
     if posts_to_skip.include?(post.id)
-      logger.log "--> SKIPPED_POST (#{ranking}/#{posts_size})"
+      logger.log "--> SKIPPED_POST (#{ranking}/#{posts.size})"
     else
       sleep(20) unless TEST_MODE
       res = do_vote(post.author, post.permlink, voting_power)
