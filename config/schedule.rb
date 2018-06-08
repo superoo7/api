@@ -21,6 +21,6 @@ every :day, at: '5:00am' do
   command "cd #{ROOT_DIR};RAILS_ENV=#{environment} #{RAKE_PATH} daily_post"
 end
 
-every :day, at: '05:02am' do
+every :day, at: '06:00am' do
   command "cd #{ROOT_DIR};RAILS_ENV=#{environment} #{RAKE_PATH} dump"
 end
