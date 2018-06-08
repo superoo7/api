@@ -33,11 +33,30 @@ class User < ApplicationRecord
     res = User.fetch_data(token)
 
     if res['user'] == self.username
-      self.update! encrypted_token: Digest::SHA256.hexdigest(token)
+      self.update!(
+        encrypted_token: Digest::SHA256.hexdigest(token),
+        reputation: ((Math.log10(res['account']['reputation'].to_i) - 9) * 9 + 25).floor # raw rep score to human friendly
+      )
 
       true
     else
       false
+    end
+  end
+
+  def level
+    return 0 unless first_logged_in? && reputation > 35
+
+    if hc_score > 100000
+      5
+    elsif hc_score > 30000
+      4
+    elsif hc_score > 10000
+      3
+    elsif hc_score > 3000
+      2
+    else
+      1
     end
   end
 

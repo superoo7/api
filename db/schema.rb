@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_06_05_141319) do
+ActiveRecord::Schema.define(version: 2018_06_08_130012) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -60,6 +60,8 @@ ActiveRecord::Schema.define(version: 2018_06_05_141319) do
     t.integer "session_count", default: 0
     t.decimal "hunt_balance", default: "0.0"
     t.string "eth_address", limit: 42
+    t.integer "hc_score", default: 0
+    t.integer "reputation", default: 0
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
