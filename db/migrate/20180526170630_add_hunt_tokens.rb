@@ -22,19 +22,19 @@ class AddHuntTokens < ActiveRecord::Migration[5.2]
     end
 
     # irreversible by default
-    User.find_by(username: 'steemhunt').update(id: 0, hunt_balance: 500000000)
+    # User.find_by(username: 'steemhunt').update(id: 0, hunt_balance: 500000000)
 
-    HuntTransaction.reward_sponsor!('bramd', 506028.772548212, 1)
-    HuntTransaction.reward_sponsor!('jsquare', 50602.6246811759, 1)
-    HuntTransaction.reward_sponsor!('koyuh8', 25301.81748787850, 1)
-    HuntTransaction.reward_sponsor!('armdown', 10119.61567111220, 1)
-    HuntTransaction.reward_sponsor!('hwantag', 5060.56555649191, 1)
-    HuntTransaction.reward_sponsor!('soosoo', 5060.06040920138, 1)
-    HuntTransaction.reward_sponsor!('strelka', 5060.06040920138, 1)
-    HuntTransaction.reward_sponsor!('leesongyi', 5060.06040920138, 1)
-    HuntTransaction.reward_sponsor!('lcc3108', 5060.06040920138, 1)
-    HuntTransaction.reward_sponsor!('hakguan', 5058.54496732980, 1)
-    HuntTransaction.reward_sponsor!('carrotcake', 5055.00893629612, 1)
-    HuntTransaction.reward_sponsor!('aleister', 2532.80851469858, 1)
+    # HuntTransaction.reward_sponsor!('bramd', 506028.772548212, 1)
+    # HuntTransaction.reward_sponsor!('jsquare', 50602.6246811759, 1)
+    # HuntTransaction.reward_sponsor!('koyuh8', 25301.81748787850, 1)
+    # HuntTransaction.reward_sponsor!('armdown', 10119.61567111220, 1)
+    # HuntTransaction.reward_sponsor!('hwantag', 5060.56555649191, 1)
+    # HuntTransaction.reward_sponsor!('soosoo', 5060.06040920138, 1)
+    # HuntTransaction.reward_sponsor!('strelka', 5060.06040920138, 1)
+    # HuntTransaction.reward_sponsor!('leesongyi', 5060.06040920138, 1)
+    # HuntTransaction.reward_sponsor!('lcc3108', 5060.06040920138, 1)
+    # HuntTransaction.reward_sponsor!('hakguan', 5058.54496732980, 1)
+    # HuntTransaction.reward_sponsor!('carrotcake', 5055.00893629612, 1)
+    # HuntTransaction.reward_sponsor!('aleister', 2532.80851469858, 1)
   end
 end
