@@ -6,7 +6,7 @@ class User < ApplicationRecord
   ADMIN_ACCOUNTS = ['steemhunt', 'tabris', 'project7']
   MODERATOR_ACCOUNTS = [
     'tabris', 'project7',
-    'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem', 'jayplayco'
+    'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem', 'jayplayco', 'bitrocker2020', 'joannewong'
   ]
 
   def first_logged_in?
