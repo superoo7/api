@@ -244,7 +244,10 @@ task :voting_bot => :environment do |t, args|
     review_commnet_added = {}
     mod_comment_added = {}
     comments.each do |comment|
+      logger.log comment.inspect
       json_metadata = JSON.parse(comment['json_metadata']) rescue {}
+
+      logger.log json_metadata
 
       is_review = comment['body'] =~ /pros\s*:/i && comment['body'] =~ /cons\s*:/i
       is_moderator = !(json_metadata['verified_by'].blank?)
