@@ -247,7 +247,7 @@ task :voting_bot => :environment do |t, args|
       json_metadata = JSON.parse(comment['json_metadata']) rescue {}
 
       is_review = comment['body'] =~ /pros\s*:/i && comment['body'] =~ /cons\s*:/i
-      is_moderator = !json_metadata['verified_by'].blank?
+      is_moderator = !(json_metadata['verified_by'].blank?)
 
       if is_review || is_moderator
         should_skip = comment_already_voted?(comment, api)
