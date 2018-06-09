@@ -25,9 +25,9 @@ task :reward_resteemers => :environment do |t, args|
   posts.each_with_index do |post, i|
     logger.log "@#{post.author}/#{post.permlink}"
 
-    resteemed_by = with_retry(3) do
+    resteemed_by = (with_retry(3) do
       api.get_reblogged_by(post.author, post.permlink)['result']
-    end.reject { |u| u == post.author }
+    end || []).reject { |u| u == post.author }
 
     logger.log "--> RESTEEMED BY: #{resteemed_by}" unless resteemed_by.empty?
     resteemed_by.each do |username|
