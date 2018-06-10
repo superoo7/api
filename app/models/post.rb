@@ -13,6 +13,9 @@ class Post < ApplicationRecord
   def calculate_hunt_score
     return if active_votes.blank?
 
+    # freeze hunt_score after payout ends (when our sync task for day 8 finishes)
+    return if created_at < Time.zone.today.to_time - 8.days
+
     voters = active_votes.map { |v| v['voter'] }
     valid_voters = {}
     User.whitelist.where(username: voters).each do |u|

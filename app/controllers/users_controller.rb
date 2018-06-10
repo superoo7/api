@@ -16,7 +16,7 @@ class UsersController < ApplicationController
     @user.session_count += 1
 
     if @user.save
-      render json: @user, status: :ok
+      render json: @user.as_json(only: [:username, :hc_score, :created_at], methods: [:level]), status: :ok
     else
       render json: { error: @user.errors.full_messages.first }, status: :unprocessable_entity
     end

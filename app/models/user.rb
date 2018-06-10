@@ -63,7 +63,9 @@ class User < ApplicationRecord
   end
 
   def hunt_score_by(weight)
-    ratio = case(level)
+    return 0 if weight <= 0
+
+    ratio = case level
     when 0
       0.0
     when 1
