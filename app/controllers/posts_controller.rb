@@ -42,7 +42,7 @@ class PostsController < ApplicationController
 
 
   def search
-    query = params[:q].to_s.gsub(/[^A-Za-z0-9\s]/, ' ')
+    query = params[:q].to_s.gsub(/[^A-Za-z0-9\s]/, ' ').first(40)
 
     render json: { posts: [] } and return if query.blank?
 
