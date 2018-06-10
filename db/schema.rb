@@ -45,10 +45,11 @@ ActiveRecord::Schema.define(version: 2018_06_08_130012) do
     t.text "description"
     t.boolean "is_verified", default: false
     t.string "verified_by"
+    t.float "hunt_score", default: 0.0
     t.index "((((to_tsvector('english'::regconfig, (author)::text) || to_tsvector('english'::regconfig, (title)::text)) || to_tsvector('english'::regconfig, (tagline)::text)) || to_tsvector('english'::regconfig, immutable_array_to_string(tags, ' '::text))))", name: "index_posts_full_text", using: :gin
     t.index ["author", "permlink"], name: "index_posts_on_author_and_permlink", unique: true
     t.index ["created_at"], name: "index_posts_on_created_at"
-    t.index ["is_active", "payout_value"], name: "index_posts_on_is_active_and_payout_value"
+    t.index ["is_active"], name: "index_posts_on_is_active"
     t.index ["url"], name: "index_posts_on_url", unique: true
   end
 
@@ -62,6 +63,7 @@ ActiveRecord::Schema.define(version: 2018_06_08_130012) do
     t.string "eth_address", limit: 42
     t.integer "hc_score", default: 0
     t.integer "reputation", default: 0
+    t.index ["encrypted_token", "reputation"], name: "index_users_on_encrypted_token_and_reputation"
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 

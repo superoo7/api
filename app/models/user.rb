@@ -9,6 +9,8 @@ class User < ApplicationRecord
     'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem', 'jayplayco', 'bitrocker2020', 'joannewong'
   ]
 
+  scope :whitelist, -> { where.not(encrypted_token: '').where('reputation >= ?', 35) }
+
   def first_logged_in?
     !encrypted_token.blank?
   end
@@ -58,6 +60,25 @@ class User < ApplicationRecord
     else
       1
     end
+  end
+
+  def hunt_score_by(weight)
+    ratio = case(level)
+    when 0
+      0.0
+    when 1
+      0.1
+    when 2
+      0.2
+    when 3
+      0.3
+    when 4
+      0.5
+    when 5
+      1.0
+    end
+
+    weight * ratio
   end
 
   def validate_eth_format
