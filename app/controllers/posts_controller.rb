@@ -1,5 +1,5 @@
 class PostsController < ApplicationController
-  before_action :ensure_login!, only: [:create, :update, :moderate, :set_moderator, :destroy]
+  before_action :ensure_login!, only: [:create, :update, :moderate, :set_moderator, :destroy, :exists]
   before_action :set_post, only: [:show, :update, :refresh, :moderate, :set_moderator, :destroy]
   before_action :check_ownership!, only: [:update, :destroy]
   before_action :check_moderator!, only: [:moderate, :set_moderator]
@@ -96,9 +96,19 @@ class PostsController < ApplicationController
   def create
     @post = Post.find_by(author: post_params[:author], permlink: post_params[:permlink])
 
+    unless @post
+      @post = Post.find_by(url: post_params[:url], author: post_params[:author])
+    end
+
     if @post
-      @post.is_active = true
-      @post.is_verified = false
+      if @post.active?
+        render json: { error: 'You have already posted the same product on Steemhunt.' }, status: :unprocessable_entity and return
+      else
+        @post.assign_attributes(post_params)
+        @post.is_active = true
+        @post.is_verified = false
+        @post.created_at = Time.now
+      end
     else
       today_count = Post.
         where(author: post_params[:author]).where(is_active: true).
@@ -243,7 +253,7 @@ class PostsController < ApplicationController
 
     def exists?(uri)
       if search = search_url(uri)
-        Post.where('url LIKE ?', search).exists?
+        Post.where('url LIKE ?', search).where.not(author: @current_user.username).exists?
       else
         'INVALID'
       end
