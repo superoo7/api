@@ -21,11 +21,12 @@ class Post < ApplicationRecord
 
     return if valid_voters.size == 0
 
+    self.hunt_score = 0
     active_votes.each do |v|
-      user = valid_voters[v['voters']]
+      user = valid_voters[v['voter']]
       next if user.nil?
 
-      hunt_score += user.hunt_score_by(v['percent'] / 100.0)
+      self.hunt_score += user.hunt_score_by(v['percent'] / 100.0)
     end
   end
 

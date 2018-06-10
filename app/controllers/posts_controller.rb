@@ -209,8 +209,10 @@ class PostsController < ApplicationController
           'json_array_length(active_votes) DESC'
         when 'comment_count'
           'children DESC'
-        else
+        when 'payout'
           'payout_value DESC'
+        else
+          '(hunt_score, payout_value) DESC'
         end
     end
 
