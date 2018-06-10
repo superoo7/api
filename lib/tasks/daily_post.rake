@@ -38,7 +38,7 @@ task :daily_post => :environment do |t, args|
     "Take a look at the top 10 hunted products yesterday for your daily dose of inspiration 😎\n"
 
   posts.each_with_index do |post, i|
-    body += "### [#{i + 1}. #{post.title}](#{post.url})\n" +
+    body += "### [#{i + 1}. #{post.title}](#{post.steemhunt_url})\n" +
       "#{post.tagline}\n" +
       "![](#{post.images.first['link']})\n" +
       ">@#{post.author} · #{post.active_votes.count} votes and #{post.children} comments\n" +

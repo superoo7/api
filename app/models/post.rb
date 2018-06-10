@@ -23,6 +23,14 @@ class Post < ApplicationRecord
     self.save!
   end
 
+  def key
+    "@#{author}/#{permlink}"
+  end
+
+  def steemhunt_url
+    "https://steemhunt.com/#{key}"
+  end
+
   def active?
     is_active
   end
