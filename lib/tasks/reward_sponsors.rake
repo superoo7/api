@@ -11,12 +11,12 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
   WEEKLY_HUNT_DISTRIBUTION = 630000
   REWARD_OPT_OUT = ['tabris', 'project7', 'misterdelegation']
 
-  logger = SLogger.new
+  logger = SLogger.new('sponsor-log')
   logger.log "== SPONSOR REWARD DISTRIBUTION - WEEK #{week} ==", true
 
   begin
     # REF: https://helloacm.com/tools/steemit/delegators/
-    uri = URI('https://steakovercooked.com/api/steemit/delegators/?cached&id=steemhunt&hash=cf67db5e424e40c363a09e7b388badff')
+    uri = URI('https://happyukgo.com/api/steemit/delegators/?id=steemhunt&hash=1f849cf2679ea83eb43d94f066c0d4eb')
     response = Net::HTTP.get(uri)
     json = JSON.parse(response)
   rescue => e

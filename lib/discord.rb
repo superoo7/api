@@ -1,5 +1,5 @@
 class Discord
-  def self.send(content)
+  def self.send(content, channel = 'bot-log')
     payload = {
       username: 'Steemhunt',
       content: content,
@@ -8,7 +8,14 @@ class Discord
 
     puts "---> DISCORD payload: #{payload}" and return unless Rails.env.production?
 
-    result = `curl -s -S -H \"Content-Type: application/json\" -X POST -d '#{payload}' #{ENV['DISCORD_WEB_HOOK']}`
+    web_hook = case channel
+    when 'sponsor-log'
+      ENV['SPONSOR_WEB_HOOK']
+    else
+      ENV['DISCORD_WEB_HOOK']
+    end
+
+    result = `curl -s -S -H \"Content-Type: application/json\" -X POST -d '#{payload}' #{web_hook}`
 
     # When rate limited
     unless result.empty?
