@@ -47,7 +47,7 @@ task :reward_resteemers => :environment do |t, args|
       end
 
       if u = User.find_by(username: username)
-        if u.first_logged_in? && u.dau?
+        if u.dau?
           has_resteemed[username] = true
         else
           logger.log "--> SKIP NOT_ACTIVE_USER: @#{username}"

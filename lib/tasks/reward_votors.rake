@@ -59,7 +59,7 @@ task :reward_voters => :environment do |t, args|
   only_users = {}
   rshares_by_users.each do |k, v|
     if u = User.find_by(username: k)
-      only_users[k] = v if u.first_logged_in? && u.dau?
+      only_users[k] = v if u.dau?
     end
   end
 

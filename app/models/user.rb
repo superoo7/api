@@ -15,12 +15,8 @@ class User < ApplicationRecord
     !encrypted_token.blank?
   end
 
-  def wau?
-    updated_at > 7.days.ago
-  end
-
   def dau?
-    updated_at > 1.day.ago
+    first_logged_in? && updated_at > 1.day.ago
   end
 
   def admin?
