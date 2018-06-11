@@ -35,7 +35,7 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
     end
   end
 
-  logger.log "\n== Total: #{formatted_number(total_vests)} VESTS (#{formatted_number(total_sps.round)} SP) / #{formatted_number(total_opt_out_vests)} VESTS OPETED OUT ==", true
+  logger.log "\n==========\nTotal: #{formatted_number(total_vests)} VESTS (#{formatted_number(total_sps.round)} SP) / #{formatted_number(total_opt_out_vests)} VESTS OPETED OUT\n==========", true
 
   logger.log "|  User Name  |   Delegated   | STEEM Rewards | HUNT Tokens Reserved | HUNT Tokens Total |"
   logger.log "|-------------|---------------|---------------|----------------------|-------------------|"
@@ -86,7 +86,7 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
         "#{(total_proportion * 100).round(2)}% | #{formatted_number(total_steem_distributed, 3)} | " +
         "#{formatted_number(total_hunt_distributed, 0)} | #{formatted_number(total_hunt_distributed + total_hunt_accumulated, 0)} |"
 
-  logger.log "\n== SEND #{formatted_number(total_steem_distributed)} STEEM TO #{steem_transactions.size} SPONSORS (#{json.size - steem_transactions.size} omitted less than 0.001) ==", true
+  logger.log "\n==========\nSEND #{formatted_number(total_steem_distributed)} STEEM TO #{steem_transactions.size} SPONSORS (#{json.size - steem_transactions.size} omitted less than 0.001)\n==========", true
 
   if should_write
     steem_transactions.each do |t|
