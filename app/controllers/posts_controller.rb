@@ -150,7 +150,7 @@ class PostsController < ApplicationController
   # PATCH /posts/refresh/@:author/:permlink
   def refresh
     if @post.update(post_refresh_params)
-      render json: { result: 'OK' }
+      render json: @post.as_json(only: [:hunt_score])
     else
       render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
     end
@@ -209,11 +209,14 @@ class PostsController < ApplicationController
           'json_array_length(active_votes) DESC'
         when 'comment_count'
           'children DESC'
-        else 'payout'
+        when 'payout'
           'payout_value DESC'
-        # TODO: ON ABV LAUNCH
-        # else
-        #   '(hunt_score, payout_value) DESC'
+        when 'hunt_score'
+          '(hunt_score, payout_value) DESC'
+        else
+          'payout_value DESC'
+          # TODO_ABV: ON ABV LAUNCH
+          # '(hunt_score, payout_value) DESC'
         end
     end
 

@@ -8,7 +8,8 @@ class Post < ApplicationRecord
   validates_uniqueness_of :url, message: '- The product has already posted'
   validates_uniqueness_of :author, scope: :permlink, message: '- The product has already posted'
 
-  before_update :calculate_hunt_score, :if => :active_votes_changed?
+  # TODO_ABV: remove this after ABV
+  before_update :calculate_hunt_score#, :if => :active_votes_changed?
 
   def calculate_hunt_score
     return if self.active_votes.blank?
