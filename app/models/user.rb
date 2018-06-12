@@ -9,7 +9,10 @@ class User < ApplicationRecord
     'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem', 'jayplayco', 'bitrocker2020', 'joannewong'
   ]
 
-  scope :whitelist, -> { where.not(encrypted_token: '').where('reputation >= ?', 35) }
+  scope :whitelist, -> {
+    where.not(encrypted_token: '').where('reputation >= ?', 35).
+    where('blacklisted_at IS NULL OR blacklisted_at < ?', 1.month.ago)
+  }
 
   def first_logged_in?
     !encrypted_token.blank?
@@ -42,38 +45,19 @@ class User < ApplicationRecord
     end
   end
 
-  def level
-    return 0 unless first_logged_in? && reputation > 35
-
-    if hc_score > 100000
-      5
-    elsif hc_score > 30000
-      4
-    elsif hc_score > 10000
-      3
-    elsif hc_score > 3000
-      2
-    else
-      1
-    end
-  end
-
   def hunt_score_by(weight)
-    return 0 if weight <= 0
+    return 0 if weight <= 0 # no down-votings
+    return 0 if !dau? || reputation < 35 # only whitelist
+    return 0 if (!blacklisted_at.nil? && blacklisted_at >= 1.month.ago) # no blacklist for 1 month
 
-    ratio = case level
-    when 0
-      0.0
-    when 1
-      0.1
-    when 2
-      0.2
-    when 3
-      0.3
-    when 4
-      0.5
-    when 5
-      1.0
+    ratio = if reputation >= 60
+      0.03
+    elsif reputation >= 55
+      0.02
+    elsif reputation >= 45
+      0.01
+    else
+      0.005
     end
 
     weight * ratio
