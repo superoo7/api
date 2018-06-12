@@ -1,3 +1,5 @@
+require 'radiator'
+
 class User < ApplicationRecord
   validates_presence_of :username
   validate :validate_eth_format
@@ -9,16 +11,21 @@ class User < ApplicationRecord
     'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem', 'jayplayco', 'bitrocker2020', 'joannewong'
   ]
 
-  def first_logged_in?
-    !encrypted_token.blank?
-  end
+  scope :whitelist, -> {
+    where.not(encrypted_token: '').where('reputation >= ?', 35).
+    where('blacklisted_at IS NULL OR blacklisted_at < ?', 1.month.ago)
+  }
 
-  def wau?
-    updated_at > 7.days.ago
+  def first_logged_in?
+    !encrypted_token.blank? && !last_logged_in_at.nil?
   end
 
   def dau?
-    updated_at > 1.day.ago
+    first_logged_in? && last_logged_in_at > 1.day.ago
+  end
+
+  def blacklist?
+    !blacklisted_at.nil? && blacklisted_at >= 1.month.ago
   end
 
   def admin?
@@ -29,16 +36,59 @@ class User < ApplicationRecord
     MODERATOR_ACCOUNTS.include?(username)
   end
 
+  # Ported from steem.js
+  # Basic rule: ((Math.log10(raw_score) - 9) * 9 + 25).floor
+  def self.rep_score(raw_score)
+    return 0 if raw_score.to_i == 0
+
+    raw_score = raw_score.to_i
+    neg = raw_score < 0 ? -1 : 1
+    raw_score = raw_score.abs
+    leading_digits = raw_score.to_s[0..3]
+    log = Math.log10(leading_digits.to_i)
+    n = raw_score.to_s.length - 1
+    out = n + log - log.to_i
+    out = 0 if out.nan?
+    out = [out - 9, 0].max
+    out = neg * out * 9 + 25
+
+    out.to_i
+  end
+
   def validate!(token)
     res = User.fetch_data(token)
 
     if res['user'] == self.username
-      self.update! encrypted_token: Digest::SHA256.hexdigest(token)
+      self.update!(
+        encrypted_token: Digest::SHA256.hexdigest(token),
+        reputation: User.rep_score(res['account']['reputation'])
+      )
 
       true
     else
       false
     end
+  end
+
+  def voting_weight
+    return 0 if !dau? || reputation < 35 # only whitelist
+    return 0 if blacklist? # no blacklist for 1 month
+
+    if reputation >= 60
+      0.03
+    elsif reputation >= 55
+      0.02
+    elsif reputation >= 45
+      0.01
+    else
+      0.005
+    end
+  end
+
+  def hunt_score_by(weight)
+    return 0 if weight <= 0 # no down-votings
+
+    voting_weight * weight
   end
 
   def validate_eth_format

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_06_05_141319) do
+ActiveRecord::Schema.define(version: 2018_06_08_130012) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -45,10 +45,11 @@ ActiveRecord::Schema.define(version: 2018_06_05_141319) do
     t.text "description"
     t.boolean "is_verified", default: false
     t.string "verified_by"
+    t.float "hunt_score", default: 0.0
     t.index "((((to_tsvector('english'::regconfig, (author)::text) || to_tsvector('english'::regconfig, (title)::text)) || to_tsvector('english'::regconfig, (tagline)::text)) || to_tsvector('english'::regconfig, immutable_array_to_string(tags, ' '::text))))", name: "index_posts_full_text", using: :gin
     t.index ["author", "permlink"], name: "index_posts_on_author_and_permlink", unique: true
     t.index ["created_at"], name: "index_posts_on_created_at"
-    t.index ["is_active", "payout_value"], name: "index_posts_on_is_active_and_payout_value"
+    t.index ["is_active"], name: "index_posts_on_is_active"
     t.index ["url"], name: "index_posts_on_url", unique: true
   end
 
@@ -60,6 +61,10 @@ ActiveRecord::Schema.define(version: 2018_06_05_141319) do
     t.integer "session_count", default: 0
     t.decimal "hunt_balance", default: "0.0"
     t.string "eth_address", limit: 42
+    t.datetime "last_logged_in_at"
+    t.integer "reputation", default: 0
+    t.datetime "blacklisted_at"
+    t.index ["encrypted_token", "reputation"], name: "index_users_on_encrypted_token_and_reputation"
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
