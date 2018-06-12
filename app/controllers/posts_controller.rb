@@ -209,10 +209,11 @@ class PostsController < ApplicationController
           'json_array_length(active_votes) DESC'
         when 'comment_count'
           'children DESC'
-        when 'payout'
+        else 'payout'
           'payout_value DESC'
-        else
-          '(hunt_score, payout_value) DESC'
+        # TODO: ON ABV LAUNCH
+        # else
+        #   '(hunt_score, payout_value) DESC'
         end
     end
 

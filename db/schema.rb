@@ -61,6 +61,7 @@ ActiveRecord::Schema.define(version: 2018_06_08_130012) do
     t.integer "session_count", default: 0
     t.decimal "hunt_balance", default: "0.0"
     t.string "eth_address", limit: 42
+    t.datetime "last_logged_in_at"
     t.integer "reputation", default: 0
     t.datetime "blacklisted_at"
     t.index ["encrypted_token", "reputation"], name: "index_users_on_encrypted_token_and_reputation"

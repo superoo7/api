@@ -30,6 +30,7 @@ class Post < ApplicationRecord
       next if user.nil?
 
       self.hunt_score += user.hunt_score_by(v['percent'] / 100.0)
+      # puts "+ #{user.hunt_score_by(v['percent'] / 100.0)} by #{v['voter']}"
     end
   end
 

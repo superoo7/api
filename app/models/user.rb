@@ -1,3 +1,5 @@
+require 'radiator'
+
 class User < ApplicationRecord
   validates_presence_of :username
   validate :validate_eth_format
@@ -15,11 +17,15 @@ class User < ApplicationRecord
   }
 
   def first_logged_in?
-    !encrypted_token.blank?
+    !encrypted_token.blank? && !last_logged_in_at.nil?
   end
 
   def dau?
-    first_logged_in? && updated_at > 1.day.ago
+    first_logged_in? && last_logged_in_at > 1.day.ago
+  end
+
+  def blacklist?
+    !blacklisted_at.nil? && blacklisted_at >= 1.month.ago
   end
 
   def admin?
@@ -30,13 +36,32 @@ class User < ApplicationRecord
     MODERATOR_ACCOUNTS.include?(username)
   end
 
+  # Ported from steem.js
+  # Basic rule: ((Math.log10(raw_score) - 9) * 9 + 25).floor
+  def self.rep_score(raw_score)
+    return 0 if raw_score.to_i == 0
+
+    raw_score = raw_score.to_i
+    neg = raw_score < 0 ? -1 : 1
+    raw_score = raw_score.abs
+    leading_digits = raw_score.to_s[0..3]
+    log = Math.log10(leading_digits.to_i)
+    n = raw_score.to_s.length - 1
+    out = n + log - log.to_i
+    out = 0 if out.nan?
+    out = [out - 9, 0].max
+    out = neg * out * 9 + 25
+
+    out.to_i
+  end
+
   def validate!(token)
     res = User.fetch_data(token)
 
     if res['user'] == self.username
       self.update!(
         encrypted_token: Digest::SHA256.hexdigest(token),
-        reputation: ((Math.log10(res['account']['reputation'].to_i) - 9) * 9 + 25).floor # raw rep score to human friendly
+        reputation: User.rep_score(res['account']['reputation'])
       )
 
       true
@@ -45,12 +70,11 @@ class User < ApplicationRecord
     end
   end
 
-  def hunt_score_by(weight)
-    return 0 if weight <= 0 # no down-votings
+  def voting_weight
     return 0 if !dau? || reputation < 35 # only whitelist
-    return 0 if (!blacklisted_at.nil? && blacklisted_at >= 1.month.ago) # no blacklist for 1 month
+    return 0 if blacklist? # no blacklist for 1 month
 
-    ratio = if reputation >= 60
+    if reputation >= 60
       0.03
     elsif reputation >= 55
       0.02
@@ -59,8 +83,12 @@ class User < ApplicationRecord
     else
       0.005
     end
+  end
 
-    weight * ratio
+  def hunt_score_by(weight)
+    return 0 if weight <= 0 # no down-votings
+
+    voting_weight * weight
   end
 
   def validate_eth_format
