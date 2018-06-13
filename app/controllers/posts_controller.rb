@@ -211,12 +211,8 @@ class PostsController < ApplicationController
           { children: :desc }
         when 'payout'
           { payout_value: :desc }
-        when 'hunt_score'
-          { hunt_score: :desc, payout_value: :desc }
         else
-          { payout_value: :desc }
-          # TODO_ABV: ON ABV LAUNCH
-          # '(hunt_score, payout_value) DESC'
+          { hunt_score: :desc, payout_value: :desc }
         end
     end
 
