@@ -59,7 +59,7 @@ class PostsController < ApplicationController
     """).
       where(is_active: true).
       where("posts.document @@ to_tsquery('english', '#{no_space} | #{terms.join(' & ')}') OR url LIKE '#{query}%'").
-      order('payout_value DESC').limit(50)
+      order({ hunt_score: :desc }).limit(50)
 
     render json: { posts: @posts.as_json(except: [:document]) }
   end
@@ -204,17 +204,17 @@ class PostsController < ApplicationController
     def set_sort_option
       @sort = case params[:sort]
         when 'created'
-          'created_at DESC'
+          { created_at: :desc }
         when 'vote_count'
           'json_array_length(active_votes) DESC'
         when 'comment_count'
-          'children DESC'
+          { children: :desc }
         when 'payout'
-          'payout_value DESC'
+          { payout_value: :desc }
         when 'hunt_score'
-          '(hunt_score, payout_value) DESC'
+          { hunt_score: :desc, payout_value: :desc }
         else
-          'payout_value DESC'
+          { payout_value: :desc }
           # TODO_ABV: ON ABV LAUNCH
           # '(hunt_score, payout_value) DESC'
         end
