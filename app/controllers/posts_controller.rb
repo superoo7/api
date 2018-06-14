@@ -82,11 +82,11 @@ class PostsController < ApplicationController
       render json: { result: "We don't accept e-commerce or affiliate sites. Please check our posting guidelines." } and return
     end
 
-    result = exists?(params[:url])
+    result = existing_post(params[:url])
     if result == 'INVALID'
       render json: { result: 'Invalid URL. Please include http or https at the beginning.' }
     elsif result
-      render json: { result: 'The product link already exists.' }
+      render json: { result: 'The product link already exists', url: result.key }
     else
       render json: { result: 'OK' }
     end
@@ -120,7 +120,7 @@ class PostsController < ApplicationController
       @post = Post.new(post_params)
     end
 
-    if exists?(@post.url) # if 'INVALID' or true
+    if existing_post(@post.url) # if 'INVALID' or true
       render json: { error: 'The product already exists on Steemhunt.' }, status: :unprocessable_entity and return
     end
 
@@ -253,9 +253,9 @@ class PostsController < ApplicationController
       "http%://%#{host}#{path}%" # NOTE: Cannot use index scan
     end
 
-    def exists?(uri)
+    def existing_post(uri)
       if search = search_url(uri)
-        Post.where('url LIKE ?', search).where.not(author: @current_user.username).exists?
+        Post.where('url LIKE ?', search).where.not(author: @current_user.username).first
       else
         'INVALID'
       end
