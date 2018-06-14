@@ -20,7 +20,7 @@ class Post < ApplicationRecord
     voters = self.active_votes.map { |v| v['voter'] }
     valid_voters = {}
     User.whitelist.where(username: voters).each do |u|
-      valid_voters[u.username] = u unless u.username == self.author
+      valid_voters[u.username] = u unless u.username == self.author # remove self votings
     end
 
     return if valid_voters.size == 0

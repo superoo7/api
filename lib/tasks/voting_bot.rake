@@ -192,7 +192,7 @@ task :voting_bot => :environment do |t, args|
   logger.log "\n==========\nVOTING STARTS with #{(POWER_TOTAL_POST * 1.25).round(2)}% TOTAL VP - #{formatted_date(yesterday)}", true
   logger.log "Current voting power: #{current_voting_power(api)}%"
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
-               order('payout_value DESC').
+               order('hunt_score DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
 
   logger.log "Total #{posts.size} posts found on #{formatted_date(yesterday)}\n==========", true

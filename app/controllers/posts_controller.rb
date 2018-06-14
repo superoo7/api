@@ -265,7 +265,7 @@ class PostsController < ApplicationController
       ecommerce_domains = [
         /alibaba\.com/,
         /aliexpress\.com/,
-        /amazon\.co/,
+        # /amazon\.co/,
         /awesomeinventions\.com/,
         /ebay\.com/,
         /etsy\.com/,

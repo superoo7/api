@@ -16,7 +16,7 @@ task :reward_resteemers => :environment do |t, args|
 
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
     where(is_active: true, is_verified: true).
-    order('payout_value DESC')
+    order('hunt_score DESC')
   logger.log "Total #{posts.count} verified posts founds\n==========", true
 
   has_resteemed = {}

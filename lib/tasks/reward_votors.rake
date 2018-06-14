@@ -16,7 +16,7 @@ task :reward_voters => :environment do |t, args|
 
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
     where(is_active: true, is_verified: true).
-    order('payout_value DESC')
+    order('hunt_score DESC')
   logger.log "Total #{posts.count} verified posts founds\n=="
 
   bid_bot_ids = get_bid_bot_ids

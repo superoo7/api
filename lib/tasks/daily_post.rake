@@ -13,7 +13,7 @@ task :daily_post => :environment do |t, args|
 
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
               where(is_active: true).
-              order('payout_value DESC')
+              order('hunt_score DESC')
   total_count = posts.count
   total_generated = posts.sum(&:payout_value)
   posts = posts.first(10)
@@ -42,7 +42,7 @@ task :daily_post => :environment do |t, args|
       "#{post.tagline}\n" +
       "![](#{post.images.first['link']})\n" +
       ">@#{post.author} · #{post.active_votes.count} votes and #{post.children} comments\n" +
-      "Pending payout: $#{formatted_number post.payout_value} SBD\n"
+      "HUNT Score: #{formatted_number post.hunt_score} (Pending payout: $#{formatted_number post.payout_value} SBD)\n"
   end
 
   body += "---\n" +
