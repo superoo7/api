@@ -281,7 +281,7 @@ task :voting_bot => :environment do |t, args|
             logger.log "--> REMOVE NOT_VOTED_REVIEW_COMMENT: @#{comment['author']}"
           elsif comment['author'] == post.author
             logger.log "--> REMOVE SELF_REVIEW_COMMENT: @#{comment['author']}"
-          elsif if User.find_by(username: comment['author']).try(:blacklist?)
+          elsif User.find_by(username: comment['author']).try(:blacklist?)
             logger.log "--> REMOVE_BLACKLIST: @#{comment['author']}"
           else
             review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
