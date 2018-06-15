@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_06_12_191650) do
+ActiveRecord::Schema.define(version: 2018_06_15_001850) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -23,6 +23,8 @@ ActiveRecord::Schema.define(version: 2018_06_12_191650) do
     t.datetime "created_at", null: false
     t.string "sender"
     t.string "receiver"
+    t.string "bounty_type"
+    t.index ["bounty_type"], name: "index_hunt_transactions_on_bounty_type"
     t.index ["receiver"], name: "index_hunt_transactions_on_receiver"
     t.index ["sender"], name: "index_hunt_transactions_on_sender"
   end

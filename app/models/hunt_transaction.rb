@@ -1,13 +1,17 @@
 require 'utils'
 
 class HuntTransaction < ApplicationRecord
-  validates_presence_of :amount, :memo
-  validate :validate_sender_and_receiver, :validate_eth_format
-  validates :memo, length: { maximum: 255 }
-
+  BOUNTY_TYPES = %w(sponsor voting resteem sp_claim posting commenting referral report moderator)
   SPONSOR_REWARD_MEMO_PREFIX = 'Weekly reward for delegation sponsor - week ' # + num
   VOTING_REWARD_MEMO_PREFIX = 'Daily reward for voting contribution - ' # + formatted date (%e %b %Y)
   RESTEEM_REWARD_MEMO_PREFIX = 'Daily reward for resteem contribution - ' # + formatted date (%e %b %Y)
+  REPORT_REWARD_MEMO_PREFIX = 'Bounty rewards for reporting abusing users -' # + formatted date (%e %b %Y)
+
+  validates_presence_of :amount, :memo
+  validate :validate_sender_and_receiver, :validate_eth_format
+  validates :memo, length: { maximum: 255 }
+  validates :bounty_type, inclusion: { in: BOUNTY_TYPES }
+
 
   def validate_sender_and_receiver
     if sender.blank? && receiver.blank?
@@ -37,29 +41,34 @@ class HuntTransaction < ApplicationRecord
     end
   end
 
-  def self.reward_votings!(username, amount, date)
-    self.reward_user!(username, amount, "#{HuntTransaction::VOTING_REWARD_MEMO_PREFIX}#{formatted_date(date)}")
-  end
-
-  def self.reward_resteems!(username, amount, date)
-    self.reward_user!(username, amount, "#{HuntTransaction::RESTEEM_REWARD_MEMO_PREFIX}#{formatted_date(date)}")
+  def self.reward_reporter!(username, amount)
+    today = Time.zone.today.to_time
+    reward_user!(username, amount, 'report', "#{HuntTransaction::REPORT_REWARD_MEMO_PREFIX}#{formatted_date(today)}", false)
   end
 
   def self.reward_sponsor!(username, amount, week)
-    self.reward_user!(username, amount, "#{HuntTransaction::SPONSOR_REWARD_MEMO_PREFIX}#{week}")
+    reward_user!(username, amount, 'sponsor', "#{HuntTransaction::SPONSOR_REWARD_MEMO_PREFIX}#{week}", true)
   end
 
-  def self.reward_user!(username, amount, memo)
+  def self.reward_votings!(username, amount, date)
+    reward_user!(username, amount, 'voting', "#{HuntTransaction::VOTING_REWARD_MEMO_PREFIX}#{formatted_date(date)}", true)
+  end
+
+  def self.reward_resteems!(username, amount, date)
+    reward_user!(username, amount, 'resteem', "#{HuntTransaction::RESTEEM_REWARD_MEMO_PREFIX}#{formatted_date(date)}", true)
+  end
+
+  private_class_method def self.reward_user!(username, amount, bounty_type, memo, check_dups = false)
     return if amount == 0
-    raise 'Duplicated Rewards' if self.exists?(receiver: username, memo: memo)
+    raise 'Duplicated Rewards' if check_dups && self.exists?(receiver: username, memo: memo)
 
     user = User.find_by(username: username)
     user = User.create!(username: username, encrypted_token: '') unless user
 
-    self.send!(amount, 'steemhunt', user.username, nil, memo)
+    send!(amount, 'steemhunt', user.username, nil, bounty_type, memo)
   end
 
-  def self.send!(amount, sender_name = nil, receiver_name = nil, eth_address = nil, memo = nil)
+  private_class_method def self.send!(amount, sender_name = nil, receiver_name = nil, eth_address = nil, bounty_type = nil, memo = nil)
     return if amount == 0
 
     sender = sender_name.blank? ? nil : User.find_by(username: sender_name)
@@ -71,6 +80,7 @@ class HuntTransaction < ApplicationRecord
         receiver: receiver_name,
         eth_address: eth_address,
         amount: amount,
+        bounty_type: bounty_type,
         memo: memo
       )
 
