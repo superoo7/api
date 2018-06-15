@@ -102,7 +102,7 @@ class PostsController < ApplicationController
 
     today = Time.zone.today.to_time
     if @post
-      if @post.active || @post.created_at < today
+      if @post.active? || @post.created_at < today
         render json: { error: 'You have already posted the same product on Steemhunt.' }, status: :unprocessable_entity and return
       else
         @post.assign_attributes(post_params)
