@@ -42,8 +42,13 @@ class HuntTransaction < ApplicationRecord
   end
 
   def self.reward_reporter!(username, amount)
-    today = Time.zone.today.to_time
-    reward_user!(username, amount, 'report', "#{HuntTransaction::REPORT_REWARD_MEMO_PREFIX}#{formatted_date(today)}", false)
+    if user = User.find_by(username: username)
+      today = Time.zone.today.to_time
+      reward_user!(username, amount, 'report', "#{HuntTransaction::REPORT_REWARD_MEMO_PREFIX}#{formatted_date(today)}", false)
+      puts "Reporter HUNT balance: #{user.hunt_balance}"
+    else
+      puts "No user found"
+    end
   end
 
   def self.reward_sponsor!(username, amount, week)
