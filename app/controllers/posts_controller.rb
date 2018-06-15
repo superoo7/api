@@ -100,8 +100,9 @@ class PostsController < ApplicationController
       @post = Post.find_by(url: post_params[:url], author: post_params[:author])
     end
 
+    today = Time.zone.today.to_time
     if @post
-      if @post.active?
+      if @post.active || @post.created_at < today
         render json: { error: 'You have already posted the same product on Steemhunt.' }, status: :unprocessable_entity and return
       else
         @post.assign_attributes(post_params)
@@ -110,9 +111,8 @@ class PostsController < ApplicationController
         @post.created_at = Time.now
       end
     else
-      today_count = Post.
-        where(author: post_params[:author]).where(is_active: true).
-        where('created_at >= ?', Time.zone.today.to_time).count
+      today_count = Post.where(author: post_params[:author]).where(is_active: true).
+                         where('created_at >= ?', today).count
       if today_count >= 2
         render json: { error: 'You have already posted 2 products today. Please hunt more tomorrow :)' }, status: :unprocessable_entity and return
       end
