@@ -7,7 +7,7 @@ task :reward_voters => :environment do |t, args|
   TEST_MODE = false # Should be false on production
   HUNT_DISTRIBUTION_VOTE = 40000.0
 
-  logger = SLogger.new
+  logger = SLogger.new('reward-log')
   api = Radiator::Api.new
   today = Time.zone.today.to_time
   yesterday = (today - 1.day).to_time

@@ -11,7 +11,7 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
   WEEKLY_HUNT_DISTRIBUTION = 630000
   REWARD_OPT_OUT = ['tabris', 'project7', 'misterdelegation']
 
-  logger = SLogger.new('sponsor-log')
+  logger = SLogger.new('reward-log')
   logger.log "== SPONSOR REWARD DISTRIBUTION - WEEK #{week} ==", true
 
   begin
@@ -96,5 +96,9 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
       logger.log "Sent to @#{t[:to]} - #{t[:amount]} STEEM", true
     end
   end
+
+  logger.log "== FINISHED SPONSOR REWARD DISTRIBUTION - WEEK #{week}: " +
+    "#{formatted_number(total_sps.round)} SP (by #{steem_transactions.size} sponsors) / " +
+    "#{formatted_number(total_steem_distributed)} STEEMs distributed ==", true
 end
 

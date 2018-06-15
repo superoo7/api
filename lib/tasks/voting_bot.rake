@@ -108,7 +108,7 @@ task :voting_bot => :environment do |t, args|
     end
   end
 
-  def do_vote(author, permlink, power)
+  def do_vote(author, permlink, power, logger)
     tx = Radiator::Transaction.new(wif: ENV['STEEMHUNT_POSTING_KEY'])
     vote = {
       type: :vote,
@@ -123,11 +123,11 @@ task :voting_bot => :environment do |t, args|
         tx.process(!TEST_MODE)
       end
     rescue => e
-      SLogger.log "FAILED VOTING: @#{author}/#{permlink} / POWER: #{power}"
+      logger.log "FAILED VOTING: @#{author}/#{permlink} / POWER: #{power}"
     end
   end
 
-  def do_comment(author, permlink, rank)
+  def do_comment(author, permlink, rank, logger)
     msg = "### Congratulation! Your hunt was ranked in #{rank.ordinalize} place on #{formatted_date(Date.yesterday)} on Steemhunt.\n" +
       "We have upvoted your post for your contribution within our community.\n" +
       "Thanks again and look forward to seeing your next hunt!\n\n" +
@@ -156,7 +156,7 @@ task :voting_bot => :environment do |t, args|
     begin
       tx.process(!TEST_MODE)
     rescue => e
-      SLogger.log "FAILED COMMENT: @#{author}/#{permlink} / RANK: #{rank}"
+      logger.log "FAILED COMMENT: @#{author}/#{permlink} / RANK: #{rank}"
     end
   end
 
@@ -178,7 +178,7 @@ task :voting_bot => :environment do |t, args|
   # Votinbot Begin
 
 
-  logger = SLogger.new
+  logger = SLogger.new('voting-log')
 
   if POWER_TOTAL_POST < 0
     logger.log "Less than 80% voting power left, STOP voting bot"
@@ -310,9 +310,9 @@ task :voting_bot => :environment do |t, args|
       logger.log "--> SKIPPED_POST (#{ranking}/#{posts.size})"
     else
       sleep(20) unless TEST_MODE
-      res = do_vote(post.author, post.permlink, voting_power)
+      res = do_vote(post.author, post.permlink, voting_power, logger)
       # logger.log "--> VOTED_POST: #{res.inspect}"
-      res = do_comment(post.author, post.permlink, ranking)
+      res = do_comment(post.author, post.permlink, ranking, logger)
       # logger.log "--> COMMENTED: #{res.inspect}", true
     end
   end
@@ -329,7 +329,7 @@ task :voting_bot => :environment do |t, args|
       logger.log "--> SKIPPED_REVIEW", true
     else
       sleep(3) unless TEST_MODE
-      res = do_vote(comment[:author], comment[:permlink], voting_power)
+      res = do_vote(comment[:author], comment[:permlink], voting_power, logger)
       # logger.log "--> VOTED_REVIEW: #{res.inspect}", true
     end
   end
@@ -344,7 +344,7 @@ task :voting_bot => :environment do |t, args|
       logger.log "--> SKIPPED_MODERATOR", true
     else
       sleep(3) unless TEST_MODE
-      res = do_vote(comment[:author], comment[:permlink], voting_power)
+      res = do_vote(comment[:author], comment[:permlink], voting_power, logger)
       # logger.log "--> VOTED_MODERATOR: #{res.inspect}", true
     end
   end

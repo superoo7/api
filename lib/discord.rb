@@ -9,8 +9,10 @@ class Discord
     puts "---> DISCORD payload: #{payload}" and return unless Rails.env.production?
 
     web_hook = case channel
-    when 'sponsor-log'
-      ENV['SPONSOR_WEB_HOOK']
+    when 'reward-log'
+      ENV['REWARD_WEB_HOOK']
+    when 'voting-log'
+      ENV['VOTING_WEB_HOOK']
     else
       ENV['DISCORD_WEB_HOOK']
     end
