@@ -18,7 +18,7 @@ class Post < ApplicationRecord
     return if self.active_votes.blank?
 
     # freeze hunt_score after payout ends (when our sync task for day 8 finishes)
-    return if self.created_at < Time.zone.today.to_time - 8.days
+    return if self.created_at < Time.zone.today.to_time
 
     voters = self.active_votes.map { |v| v['voter'] }
     valid_voters = {}

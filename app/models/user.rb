@@ -12,17 +12,17 @@ class User < ApplicationRecord
   ]
 
   scope :whitelist, -> {
+    where('last_logged_in_at >= ?', Time.zone.today.to_time).
     where.not(encrypted_token: '').where('reputation >= ?', 35).
-    where('last_logged_in_at > ?', 1.day.ago).
     where('blacklisted_at IS NULL OR blacklisted_at < ?', 1.month.ago)
   }
 
-  def first_logged_in?
-    !encrypted_token.blank? && !last_logged_in_at.nil?
+  def dau?
+    last_logged_in_at > Time.zone.today.to_time
   end
 
-  def dau?
-    first_logged_in? && last_logged_in_at > 1.day.ago
+  def dau_yesterday?
+    last_logged_in_at > Time.zone.yesterday.to_time
   end
 
   def blacklist?
