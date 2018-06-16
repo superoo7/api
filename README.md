@@ -9,20 +9,47 @@
 ## Development setup
 
 ### DB Preparation
+
+### Install
+First install rbenv and ruby
+```
+brew install rbenv
+brew install ruby-build
+rbenv install 2.4.2
+```
+
+If you don't have Postgres DB installed on your machine, install it via
+```
+brew install postgresql
+```
+
+Then prepare your dev database:
 ```
 PG_UNAME=steemhunt
 psql -d postgres -c "CREATE USER $PG_UNAME;"
 psql -d postgres -c "ALTER USER $PG_UNAME CREATEDB;"
 psql -d postgres -c "ALTER USER $PG_UNAME WITH SUPERUSER;"
-
-rails db:drop db:create db:migrate db:seed
 ```
 
-### Install
+Then clone the api repo on 
+`your_path/steemhunt/api`
+and web repo on 
+`your_path/steemhunt/web`
+
+On api repo, install gems
 ```
-brew install rbenv
-brew install ruby-build
-rbenv install 2.4.2
 gem install bundler
 bundle install
+```
+
+then migrate database
+```
+bundle exec rails db:drop db:create db:migrate db:seed
+```
+
+Now you finished installation.
+
+You can start both api and web server by running 
+```
+bundle exec rails start
 ```
