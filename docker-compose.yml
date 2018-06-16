@@ -1,0 +1,63 @@
+version: '3'
+
+volumes:
+  store:
+    driver: local
+  bundle:
+    driver: local
+
+services:
+  web:
+    build: .
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/app
+      - bundle:/usr/local/bundle
+    links:
+      - db
+    # Keep the stdin open, so we can attach to our app container's process and do things such as
+    # byebug, etc:
+    stdin_open: true
+    # Enable sending signals (CTRL+C, CTRL+P + CTRL+Q) into the container:
+    tty: true
+    command: ./bin/start.sh
+    environment: &app_env
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: steemhunt
+      DB_NAME: steemhunt
+  db:
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    volumes:
+      - store:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: steemhunt
+      POSTGRES_DB: steemhunt
+
+
+# version: '3'
+# services:
+#   db:
+#     image: postgres
+#     volumes:
+#       - ./tmp/db:/var/lib/postgresql/data
+#     environment:
+#       - POSTGRES_USER:'steemhunt'
+#     ports:
+#       - "5432:5432"
+#   web:
+#     build: .
+#     command: "bundle exec rails db:create"
+#     # command: bash -c "bundle exec rails db:drop db:create db:migrate db:seed && bundle exec rails start"
+#     volumes:
+#       - .:/steemhunt
+#     ports:
+#       - "3000:3000"
+#     depends_on:
+#       - db
+#     links:
+#       - db
