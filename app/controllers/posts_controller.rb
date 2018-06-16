@@ -22,7 +22,7 @@ class PostsController < ApplicationController
       @posts = @posts.where(is_active: true).order(@sort)
     end
 
-    render json: @posts
+    render json: @posts.as_json(except: [:active_votes])
   end
 
   def top
