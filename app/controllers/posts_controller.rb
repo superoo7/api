@@ -150,7 +150,7 @@ class PostsController < ApplicationController
   # PATCH /posts/refresh/@:author/:permlink
   def refresh
     if @post.update(post_refresh_params)
-      render json: @post.as_json(only: [:hunt_score])
+      render json: @post.as_json(only: [:hunt_score, :valid_votes])
     else
       render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
     end

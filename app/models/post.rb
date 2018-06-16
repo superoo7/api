@@ -8,9 +8,12 @@ class Post < ApplicationRecord
   validates_uniqueness_of :url, message: '- The product has already posted'
   validates_uniqueness_of :author, scope: :permlink, message: '- The product has already posted'
 
-  # TODO_ABV: remove this after ABV
-  before_update :calculate_hunt_score#, :if => :active_votes_changed?
+  # TODO_ABV: Uncomment for efficiency
+  before_update :calculate_hunt_score#, if: :active_votes_changed?
 
+  # NOTE: JSON structure
+  # - active_votes: { "voter": "tabris", "weight": 645197, "rshares": "401660828088", "percent": 10000, "reputation": "7112685098931", "time": "2018-02-16T20:14:48" }
+  # - valid_votes: { "voter": "tabris", "percent": 10000, "score": 3.0 }
   def calculate_hunt_score
     return if self.active_votes.blank?
 
@@ -26,11 +29,14 @@ class Post < ApplicationRecord
     return if valid_voters.size == 0
 
     self.hunt_score = 0
+    self.valid_votes = []
     self.active_votes.each do |v|
       user = valid_voters[v['voter']]
       next if user.nil?
 
-      self.hunt_score += user.hunt_score_by(v['percent'] / 100.0)
+      score = user.hunt_score_by(v['percent'] / 100.0)
+      self.hunt_score += score
+      self.valid_votes << { 'voter' => v['voter'], 'percent' => v['percent'], 'score' => score }
       # puts "+ #{user.hunt_score_by(v['percent'] / 100.0)} by #{v['voter']}"
     end
   end
