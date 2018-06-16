@@ -18,9 +18,9 @@ brew install ruby-build
 rbenv install 2.4.2
 ```
 
-If you don't have Postgres DB installed on your machine, install it via
+If you don't have PostgresSQL or Node installed on your machine, install it via
 ```
-brew install postgresql
+brew install postgresql node
 ```
 
 Then prepare your dev database:
