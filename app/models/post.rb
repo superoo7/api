@@ -33,6 +33,7 @@ class Post < ApplicationRecord
     self.active_votes.each do |v|
       user = valid_voters[v['voter']]
       next if user.nil?
+      next if v['percent'] <= 0
 
       score = user.hunt_score_by(v['percent'] / 100.0)
       self.hunt_score += score

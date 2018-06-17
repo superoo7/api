@@ -41,7 +41,7 @@ task :daily_post => :environment do |t, args|
     body += "### [#{i + 1}. #{post.title}](#{post.steemhunt_url})\n" +
       "#{post.tagline}\n" +
       "![](#{post.images.first['link']})\n" +
-      ">@#{post.author} · #{post.active_votes.count} votes and #{post.children} comments\n" +
+      ">@#{post.author} · #{post.valid_votes.count} votes and #{post.children} comments\n" +
       "HUNT Score: #{formatted_number post.hunt_score} (Pending payout: $#{formatted_number post.payout_value} SBD)\n"
   end
 
