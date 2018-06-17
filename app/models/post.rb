@@ -9,7 +9,7 @@ class Post < ApplicationRecord
   validates_uniqueness_of :author, scope: :permlink, message: '- The product has already posted'
 
   # TODO_ABV: Uncomment for efficiency
-  before_update :calculate_hunt_score#, if: :active_votes_changed?
+  before_update :calculate_hunt_score, if: :active_votes_changed?
 
   # NOTE: JSON structure
   # - active_votes: { "voter": "tabris", "weight": 645197, "rshares": "401660828088", "percent": 10000, "reputation": "7112685098931", "time": "2018-02-16T20:14:48" }
