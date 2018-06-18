@@ -5,7 +5,7 @@ class SLogger
 
   def initialize(channel = 'bot-log')
     @stack = ''
-    @channel = channel
+    @discord = Discord.new(channel)
   end
 
   # Stack up logs and send in a bulk to avoid Discord rate limit
@@ -26,7 +26,7 @@ class SLogger
     end
 
     if @stack.size > BLOCK_SIZE || flush
-      Discord.send(@stack, @channel)
+      @discord.send(@stack)
       @stack = ''
     end
   end
@@ -37,6 +37,6 @@ class SLogger
       return
     end
 
-    Discord.send(text, @channel)
+    @discord.send(text)
   end
 end
