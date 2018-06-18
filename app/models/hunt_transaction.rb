@@ -43,9 +43,9 @@ class HuntTransaction < ApplicationRecord
     if user = User.find_by(username: username)
       today = Time.zone.today.to_time
       reward_user!(username, amount, 'report', "Bounty rewards for reporting abusing users -#{formatted_date(today)}", false)
-      logger.log "Reporter HUNT balance: #{user.hunt_balance} -> #{user.reload.hunt_balance}"
+      logger.log "Reporter HUNT balance: #{user.hunt_balance} -> #{user.reload.hunt_balance}", true
     else
-      logger.log "No user found: @#{username}"
+      logger.log "No user found: @#{username}", true
     end
   end
 
@@ -53,12 +53,12 @@ class HuntTransaction < ApplicationRecord
     logger = SLogger.new('reward-log')
 
     if user = User.find_by(username: username)
-      msg = "#{memo} - #{week}"
+      msg = "#{memo} - week #{week}"
       reward_user!(username, amount, bounty_type, msg, true)
       logger.log "#{bounty_type.upcase}] Send #{amount} HUNT to @#{username} - #{msg}\n" +
-        "HUNT balance: #{user.hunt_balance} -> #{user.reload.hunt_balance}"
+        "HUNT balance: #{user.hunt_balance} -> #{user.reload.hunt_balance}", true
     else
-      logger.log "No user found: 2#{username}"
+      logger.log "No user found: 2#{username}", true
     end
   end
 
