@@ -290,7 +290,7 @@ task :voting_bot => :environment do |t, args|
             logger.log "--> REMOVE NOT_DAU: @#{comment['author']}"
           elsif review_user.reputation < 35
             logger.log "--> REMOVE LOW_REPUTATION: @#{comment['author']}"
-          elsif review_author.try(:blacklist?)
+          elsif review_user.try(:blacklist?)
             logger.log "--> REMOVE_BLACKLIST: @#{comment['author']}"
           else
             review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
