@@ -1,17 +1,13 @@
 require 'utils'
+require 's_logger'
 
 class HuntTransaction < ApplicationRecord
-  BOUNTY_TYPES = %w(sponsor voting resteem sp_claim posting commenting referral report moderator)
-  SPONSOR_REWARD_MEMO_PREFIX = 'Weekly reward for delegation sponsor - week ' # + num
-  VOTING_REWARD_MEMO_PREFIX = 'Daily reward for voting contribution - ' # + formatted date (%e %b %Y)
-  RESTEEM_REWARD_MEMO_PREFIX = 'Daily reward for resteem contribution - ' # + formatted date (%e %b %Y)
-  REPORT_REWARD_MEMO_PREFIX = 'Bounty rewards for reporting abusing users -' # + formatted date (%e %b %Y)
+  BOUNTY_TYPES = %w(sponsor voting resteem sp_claim posting commenting referral report moderator contribution guardian)
 
   validates_presence_of :amount, :memo
   validate :validate_sender_and_receiver, :validate_eth_format
   validates :memo, length: { maximum: 255 }
   validates :bounty_type, inclusion: { in: BOUNTY_TYPES }
-
 
   def validate_sender_and_receiver
     if sender.blank? && receiver.blank?
@@ -42,25 +38,40 @@ class HuntTransaction < ApplicationRecord
   end
 
   def self.reward_reporter!(username, amount)
+    logger = SLogger.new('reward-log')
+
     if user = User.find_by(username: username)
       today = Time.zone.today.to_time
-      reward_user!(username, amount, 'report', "#{HuntTransaction::REPORT_REWARD_MEMO_PREFIX}#{formatted_date(today)}", false)
-      puts "Reporter HUNT balance: #{user.hunt_balance} -> #{user.reload.hunt_balance}"
+      reward_user!(username, amount, 'report', "Bounty rewards for reporting abusing users -#{formatted_date(today)}", false)
+      logger.log "Reporter HUNT balance: #{user.hunt_balance} -> #{user.reload.hunt_balance}"
     else
-      puts "No user found"
+      logger.log "No user found: @#{username}"
+    end
+  end
+
+  def self.reward_contributor!(username, amount, week, bounty_type, memo)
+    logger = SLogger.new('reward-log')
+
+    if user = User.find_by(username: username)
+      msg = "#{memo} - #{week}"
+      reward_user!(username, amount, bounty_type, msg, true)
+      logger.log "#{bounty_type.upcase}] Send #{amount} HUNT to @#{username} - #{msg}\n" +
+        "HUNT balance: #{user.hunt_balance} -> #{user.reload.hunt_balance}"
+    else
+      logger.log "No user found: 2#{username}"
     end
   end
 
   def self.reward_sponsor!(username, amount, week)
-    reward_user!(username, amount, 'sponsor', "#{HuntTransaction::SPONSOR_REWARD_MEMO_PREFIX}#{week}", true)
+    reward_user!(username, amount, 'sponsor', "Weekly reward for delegation sponsor - week #{week}", true)
   end
 
   def self.reward_votings!(username, amount, date)
-    reward_user!(username, amount, 'voting', "#{HuntTransaction::VOTING_REWARD_MEMO_PREFIX}#{formatted_date(date)}", true)
+    reward_user!(username, amount, 'voting', "Daily reward for voting contribution - #{formatted_date(date)}", true)
   end
 
   def self.reward_resteems!(username, amount, date)
-    reward_user!(username, amount, 'resteem', "#{HuntTransaction::RESTEEM_REWARD_MEMO_PREFIX}#{formatted_date(date)}", true)
+    reward_user!(username, amount, 'resteem', "Daily reward for resteem contribution - #{formatted_date(date)}", true)
   end
 
   private_class_method def self.reward_user!(username, amount, bounty_type, memo, check_dups = false)

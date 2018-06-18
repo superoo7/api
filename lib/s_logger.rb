@@ -30,13 +30,4 @@ class SLogger
       @stack = ''
     end
   end
-
-  def self.log(text)
-    unless Rails.env.production?
-      puts text
-      return
-    end
-
-    @discord.send(text)
-  end
 end
