@@ -246,6 +246,7 @@ task :voting_bot => :environment do |t, args|
     # logger.log "----> #{comments.size} comments returned"
 
     review_commnet_added = {}
+    total_review_comment_count = 0
     mod_comment_added = {}
     comments.each do |comment|
       json_metadata = JSON.parse(comment['json_metadata']) rescue {}
@@ -272,15 +273,24 @@ task :voting_bot => :environment do |t, args|
           end
         # 2. Review comments
         elsif is_review
+          total_review_comment_count += 1
+          review_user = User.find_by(username: comment['author'])
+
           if review_commnet_added[comment['author']]
             logger.log "--> REMOVE DUPLICATED_REVIEW_COMMENT: @#{comment['author']}"
           elsif comment['body'].size < 80
             logger.log "--> REMOVE TOO_SHORT_REVIEW_COMMENT: @#{comment['author']}"
-          elsif !votes.any? { |v| v['voter'] == comment['author'] && v['percent'] >= 5000 }
+          elsif !votes.any? { |v| v['voter'] == comment['author'] && v['percent'] >= 3000 }
             logger.log "--> REMOVE NOT_VOTED_REVIEW_COMMENT: @#{comment['author']}"
           elsif comment['author'] == post.author
             logger.log "--> REMOVE SELF_REVIEW_COMMENT: @#{comment['author']}"
-          elsif User.find_by(username: comment['author']).try(:blacklist?)
+          elsif review_user.nil?
+            logger.log "--> REMOVE NOT_A_USER: @#{comment['author']}"
+          elsif !review_user.dau_yesterday?
+            logger.log "--> REMOVE NOT_DAU: @#{comment['author']}"
+          elsif review_user.reputation < 35
+            logger.log "--> REMOVE LOW_REPUTATION: @#{comment['author']}"
+          elsif review_author.try(:blacklist?)
             logger.log "--> REMOVE_BLACKLIST: @#{comment['author']}"
           else
             review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
@@ -299,7 +309,7 @@ task :voting_bot => :environment do |t, args|
 
   logger.log "\n==========\nTotal #{original_post_size} posts -> #{posts.size} accepted\n"
   logger.log "Total reward (active): $#{total_reward} SBD -> \n"
-  logger.log "Total #{review_comments.size} review comments\n"
+  logger.log "Total #{total_review_comment_count} review comments -> #{review_comments.size} qualified\n"
   logger.log "Voting start with\n - #{POWER_TOTAL_POST.round(2)}% VP on Posts\n - #{POWER_TOTAL_COMMENT.round(2)}% VP on Posts\n==========", true
 
   posts.each_with_index do |post, i|
