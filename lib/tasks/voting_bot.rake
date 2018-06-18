@@ -197,6 +197,7 @@ task :voting_bot => :environment do |t, args|
   logger.log "Total #{posts.size} posts found on #{formatted_date(yesterday)}\n==========", true
 
   review_comments = []
+  total_review_comment_count = 0
   moderators_comments =  []
   posts_to_skip = [] # posts that should skip votings, but need to be counted for VP
   posts_to_remove = [] # posts  that should be removed from the ranking entirely (not counted for VP)
@@ -245,8 +246,8 @@ task :voting_bot => :environment do |t, args|
     end
     # logger.log "----> #{comments.size} comments returned"
 
+    # duplication checks for each posts
     review_commnet_added = {}
-    total_review_comment_count = 0
     mod_comment_added = {}
     comments.each do |comment|
       json_metadata = JSON.parse(comment['json_metadata']) rescue {}

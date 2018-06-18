@@ -1,3 +1,5 @@
+# DEPRECATED
+
 require 'radiator'
 require 'utils'
 require 's_logger'
