@@ -47,7 +47,7 @@ class PostsController < ApplicationController
     render json: { posts: [] } and return if query.blank?
 
     terms = query.split
-    no_space = query.gsub(/\s\t/, '')
+    no_space = query.gsub(/[\s\t]/, '')
 
     @posts = Post.from("""
       (SELECT *,
