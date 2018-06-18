@@ -55,8 +55,8 @@ class HuntTransaction < ApplicationRecord
     if user = User.find_by(username: username)
       msg = "#{memo} - week #{week}"
       reward_user!(username, amount, bounty_type, msg, true)
-      logger.log "#{bounty_type.upcase}] Send #{amount} HUNT to @#{username} - #{msg}\n" +
-        "HUNT balance: #{user.hunt_balance} -> #{user.reload.hunt_balance}", true
+      logger.log "#{bounty_type.upcase}] Sent #{amount} HUNT to @#{username} - #{msg}\n" +
+        "HUNT balance: #{user.hunt_balance.round(2)} -> #{user.reload.hunt_balance.round(2)}", true
     else
       logger.log "No user found: 2#{username}", true
     end
