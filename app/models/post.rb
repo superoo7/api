@@ -10,6 +10,8 @@ class Post < ApplicationRecord
 
   # TODO_ABV: Uncomment for efficiency
   before_update :calculate_hunt_score, if: :active_votes_changed?
+  scope :today, -> { where('created_at >= ?', Time.zone.today.to_time) }
+  scope :active, -> { where(is_active: true) }
 
   # NOTE: JSON structure
   # - active_votes: { "voter": "tabris", "weight": 645197, "rshares": "401660828088", "percent": 10000, "reputation": "7112685098931", "time": "2018-02-16T20:14:48" }

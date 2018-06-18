@@ -194,7 +194,6 @@ task :voting_bot => :environment do |t, args|
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                order('hunt_score DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
-
   logger.log "Total #{posts.size} posts found on #{formatted_date(yesterday)}\n==========", true
 
   review_comments = []
@@ -296,8 +295,10 @@ task :voting_bot => :environment do |t, args|
   original_post_size = posts.size
   posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
   vp_distribution = natural_distributed_array(posts.size)
+  total_reward = posts.reduce(0) { |s, p| s + p.payout_value }
 
-  logger.log "\n==========\n Total #{original_post_size} posts -> #{posts.size} accepted\n"
+  logger.log "\n==========\nTotal #{original_post_size} posts -> #{posts.size} accepted\n"
+  logger.log "Total reward (active): $#{total_reward} SBD -> "
   logger.log "Total #{review_comments.size} review comments\n"
   logger.log "Voting start with\n - #{POWER_TOTAL_POST.round(2)}% VP on Posts\n - #{POWER_TOTAL_COMMENT.round(2)}% VP on Posts\n==========", true
 
