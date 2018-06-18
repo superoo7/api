@@ -9,7 +9,8 @@ task :daily_post => :environment do |t, args|
 
   date = yesterday.strftime("%e %b %Y")
   title = "Daily Top 10 Hunts on Steemhunt (#{date})"
-  SLogger.log "Start posting - #{title}"
+  logger = SLogger.new
+  logger.log "Start posting - #{title}"
 
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
               where(is_active: true).
@@ -86,5 +87,5 @@ task :daily_post => :environment do |t, args|
   tx.operations << comment
   tx.process(true)
 
-  SLogger.log "Post succeeded"
+  logger.log "Post succeeded"
 end
