@@ -298,7 +298,7 @@ task :voting_bot => :environment do |t, args|
   total_reward = posts.reduce(0) { |s, p| s + p.payout_value }
 
   logger.log "\n==========\nTotal #{original_post_size} posts -> #{posts.size} accepted\n"
-  logger.log "Total reward (active): $#{total_reward} SBD -> "
+  logger.log "Total reward (active): $#{total_reward} SBD -> \n"
   logger.log "Total #{review_comments.size} review comments\n"
   logger.log "Voting start with\n - #{POWER_TOTAL_POST.round(2)}% VP on Posts\n - #{POWER_TOTAL_COMMENT.round(2)}% VP on Posts\n==========", true
 
