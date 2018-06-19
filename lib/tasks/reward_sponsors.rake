@@ -35,7 +35,7 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
     end
   end
 
-  logger.log "\n==========\nTotal: #{formatted_number(total_vests)} VESTS (#{formatted_number(total_sps.round)} SP) / #{formatted_number(total_opt_out_vests)} VESTS OPETED OUT\n==========", true
+  logger.log "\n==========\nTotal: #{formatted_number(total_vests)} VESTS (#{formatted_number(total_sps.round)} SP) / #{formatted_number(total_opt_out_vests)} VESTS OPTED OUT\n==========", true
 
   logger.log "|  User Name  |   Delegated   | STEEM Rewards | HUNT Tokens Reserved | HUNT Tokens Total |"
   logger.log "|-------------|---------------|---------------|----------------------|-------------------|"
