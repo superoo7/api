@@ -248,7 +248,7 @@ class PostsController < ApplicationController
       path = parsed.path == '/' ? '' : parsed.path
 
       # Google Playstore apps use parameters for different products
-      return uri if host == 'play.google.com' && path == '/store/apps/details'
+      return "#{uri}%" if host == 'play.google.com' && path == '/store/apps/details'
 
       "http%://%#{host}#{path}%" # NOTE: Cannot use index scan
     end
