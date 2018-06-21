@@ -10,6 +10,9 @@ class User < ApplicationRecord
     'tabris', 'project7',
     'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem', 'jayplayco', 'bitrocker2020', 'joannewong'
   ]
+  GUARDIAN_ACCOUNTS = [
+    'folken', 'fknmayhem'
+  ]
 
   scope :whitelist, -> {
     where('last_logged_in_at >= ?', Time.zone.today.to_time).
@@ -35,6 +38,10 @@ class User < ApplicationRecord
 
   def moderator?
     MODERATOR_ACCOUNTS.include?(username)
+  end
+
+  def guardian?
+    GUARDIAN_ACCOUNTS.include?(username)
   end
 
   # Ported from steem.js

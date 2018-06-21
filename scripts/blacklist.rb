@@ -14,3 +14,4 @@ users.each do |u|
   end
 end
 
+HuntTransaction.reward_reporter! '', 500

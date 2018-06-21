@@ -171,7 +171,7 @@ class PostsController < ApplicationController
 
   # PATCH /moderate/@:author/:permlink
   def moderate
-    if @post.verified_by != @current_user.username && !@current_user.admin?
+    if @post.verified_by != @current_user.username && !@current_user.admin? && !@current_user.guardian?
       render json: { error: "This product is in review by #{@post.verified_by}" }, status: :forbidden
     elsif @post.update!(post_moderate_params.merge(verified_by: @current_user.username))
       render_moderator_fields
