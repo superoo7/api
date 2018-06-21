@@ -66,7 +66,7 @@ class PostsController < ApplicationController
 
   # GET /posts/@:author
   def author
-    @posts = Post.where(author: params[:author], is_active: true).order(@sort)
+    @posts = Post.where(author: params[:author]).order(@sort)
 
     render_pages
   end
