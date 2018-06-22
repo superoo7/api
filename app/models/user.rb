@@ -70,7 +70,8 @@ class User < ApplicationRecord
     if res['user'] == self.username
       self.update!(
         encrypted_token: Digest::SHA256.hexdigest(token),
-        reputation: User.rep_score(res['account']['reputation'])
+        reputation: User.rep_score(res['account']['reputation']),
+        vesting_shares: res['account']['vesting_shares'].to_f
       )
 
       true
@@ -182,7 +183,8 @@ class User < ApplicationRecord
     end
 
     # higher weight if user spent 50 full votes & maintained a good diversity
-    if score > 0.65 && weighted_receiver_count > 500000
+    # exclude dust thresholds (< 500 SP)
+    if score > 0.64 && weighted_receiver_count > 500000 && vesting_shares > 1000000
       score *= 1.5
     end
 
