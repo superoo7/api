@@ -22,9 +22,11 @@ task :sync_posts, [:days] => :environment do |t, args|
     old_votes = post.active_votes.size
     old_payout = post.payout_value
     old_comments = post.children
+    old_hunt_score = post.hunt_score
     post.sync! api.get_content(post.author, post.permlink)['result']
 
     diff += post.payout_value - old_payout
+    logger.log "--> HuntScore: #{old_hunt_score.round(2)} -> #{post.hunt_score.round(2)}"
     # logger.log "--> Payout: #{old_payout.round(2)} -> #{post.payout_value.round(2)}" if diff.abs > 0.1
     # logger.log "--> Likes: #{old_votes} -> #{post.active_votes.size}" if post.active_votes.size != old_votes
     # logger.log "--> Comments: #{old_comments} -> #{post.children}" if post.children != old_comments

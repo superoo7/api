@@ -17,7 +17,7 @@ class UsersController < ApplicationController
     @user.last_logged_in_at = Time.now
 
     if @user.save
-      render json: @user.as_json(only: [:username, :created_at, :blacklisted_at], methods: [:voting_weight]), status: :ok
+      render json: @user.as_json(only: [:username, :created_at, :blacklisted_at], methods: [:voting_weight, :diversity_score]), status: :ok
     else
       render json: { error: @user.errors.full_messages.first }, status: :unprocessable_entity
     end

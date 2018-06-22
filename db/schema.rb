@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_06_16_162416) do
+ActiveRecord::Schema.define(version: 2018_06_22_112805) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -67,6 +67,8 @@ ActiveRecord::Schema.define(version: 2018_06_16_162416) do
     t.datetime "last_logged_in_at"
     t.integer "reputation", default: 0
     t.datetime "blacklisted_at"
+    t.float "cached_diversity_score", default: -1.0
+    t.datetime "diversity_score_updated_at"
     t.index ["encrypted_token", "reputation"], name: "index_users_on_encrypted_token_and_reputation"
     t.index ["last_logged_in_at"], name: "index_users_on_last_logged_in_at"
     t.index ["username"], name: "index_users_on_username", unique: true

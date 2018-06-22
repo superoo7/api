@@ -83,7 +83,7 @@ class User < ApplicationRecord
     return 0 if !dau? || reputation < 35 # only whitelist
     return 0 if blacklist? # no blacklist for 1 month
 
-    if reputation >= 60
+    weight = if reputation >= 60
       0.03
     elsif reputation >= 55
       0.02
@@ -92,6 +92,8 @@ class User < ApplicationRecord
     else
       0.005
     end
+
+    weight * diversity_score
   end
 
   def hunt_score_by(weight)
@@ -131,5 +133,63 @@ class User < ApplicationRecord
 
       { error: e.message }
     end
+  end
+
+  # MARK: - Diversity Score
+
+  def votee
+    Post.from('posts, json_array_elements(posts.valid_votes) v').
+      where("v->>'voter' = ?", username).group(:author).count
+  end
+
+  def votee_weight
+    Post.from('posts, json_array_elements(posts.valid_votes) v').
+      where("v->>'voter' = ?", username).group(:author).sum("(v#>>'{percent}')::integer")
+  end
+
+  # weighted version of `voted users count / voting count`
+  # range from 0.0 - 1.0
+  # if a user voted 100 times (with the same weight to all):
+  # - only 1 receiver => 0.01
+  # - 90 receivers => 0.9
+  def diversity_score
+    return cached_diversity_score if cached_diversity_score >= 0 && diversity_score_updated_at && diversity_score_updated_at > 24.hours.ago
+
+    counts = votee
+    weights = votee_weight
+
+    voting_count = 0
+    total_weight = 0
+    weighted_receiver_count = 0
+    counts.each do |id, count|
+      voting_count += count
+      weighted_receiver_count += (weights[id] / count.to_f)
+      total_weight += weights[id]
+    end
+
+    avg_voting_count_per_user = voting_count / counts.count.to_f
+
+    # users on day 1 always have 1.0 weight on diversity score
+    # because they can only vote once per every users anyway
+    # - minimize fresh account abusing by make threshold avg_voting_count_per_user to 1.1
+    # - also reduce score for fresh accounts
+    score = if avg_voting_count_per_user <= 1.1 || voting_count < 20
+      0.1
+    elsif voting_count < 50
+      0.5 * weighted_receiver_count / total_weight.to_f
+    else
+      weighted_receiver_count / total_weight.to_f
+    end
+
+    # higher weight if user spent 50 full votes & maintained a good diversity
+    if score > 0.65 && weighted_receiver_count > 500000
+      score *= 1.5
+    end
+
+    self.cached_diversity_score = score
+    self.diversity_score_updated_at = Time.now
+    self.save!
+
+    self.cached_diversity_score
   end
 end
