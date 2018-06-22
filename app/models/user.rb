@@ -8,7 +8,8 @@ class User < ApplicationRecord
   ADMIN_ACCOUNTS = ['steemhunt', 'tabris', 'project7']
   MODERATOR_ACCOUNTS = [
     'tabris', 'project7',
-    'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem', 'jayplayco', 'bitrocker2020', 'joannewong'
+    'teamhumble', 'folken', 'urbangladiator', 'chronocrypto', 'dayleeo', 'fknmayhem', 'jayplayco', 'bitrocker2020', 'joannewong',
+    'geekgirl', 'playitforward'
   ]
   GUARDIAN_ACCOUNTS = [
     'folken', 'fknmayhem'
