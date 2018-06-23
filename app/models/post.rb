@@ -8,14 +8,19 @@ class Post < ApplicationRecord
   validates_uniqueness_of :url, message: '- The product has already posted'
   validates_uniqueness_of :author, scope: :permlink, message: '- The product has already posted'
 
-  # TODO_ABV: remove this after ABV
-  before_update :calculate_hunt_score#, :if => :active_votes_changed?
+  # TODO_ABV: Uncomment for efficiency
+  before_update :calculate_hunt_score, if: :active_votes_changed?
+  scope :today, -> { where('created_at >= ?', Time.zone.today.to_time) }
+  scope :active, -> { where(is_active: true) }
 
+  # NOTE: JSON structure
+  # - active_votes: { "voter": "tabris", "weight": 645197, "rshares": "401660828088", "percent": 10000, "reputation": "7112685098931", "time": "2018-02-16T20:14:48" }
+  # - valid_votes: { "voter": "tabris", "percent": 10000, "score": 3.0 }
   def calculate_hunt_score
     return if self.active_votes.blank?
 
     # freeze hunt_score after payout ends (when our sync task for day 8 finishes)
-    return if self.created_at < Time.zone.today.to_time - 8.days
+    return if self.created_at < Time.zone.today.to_time
 
     voters = self.active_votes.map { |v| v['voter'] }
     valid_voters = {}
@@ -26,11 +31,15 @@ class Post < ApplicationRecord
     return if valid_voters.size == 0
 
     self.hunt_score = 0
+    self.valid_votes = []
     self.active_votes.each do |v|
       user = valid_voters[v['voter']]
       next if user.nil?
+      next if v['percent'] <= 0
 
-      self.hunt_score += user.hunt_score_by(v['percent'] / 100.0)
+      score = user.hunt_score_by(v['percent'] / 100.0)
+      self.hunt_score += score
+      self.valid_votes << { 'voter' => v['voter'], 'percent' => v['percent'], 'score' => score }
       # puts "+ #{user.hunt_score_by(v['percent'] / 100.0)} by #{v['voter']}"
     end
   end

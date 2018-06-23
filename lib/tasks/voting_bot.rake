@@ -194,10 +194,10 @@ task :voting_bot => :environment do |t, args|
   posts = Post.where('created_at >= ? AND created_at < ?', yesterday, today).
                order('hunt_score DESC').
                limit(MAX_POST_VOTING_COUNT).to_a
-
   logger.log "Total #{posts.size} posts found on #{formatted_date(yesterday)}\n==========", true
 
   review_comments = []
+  total_review_comment_count = 0
   moderators_comments =  []
   posts_to_skip = [] # posts that should skip votings, but need to be counted for VP
   posts_to_remove = [] # posts  that should be removed from the ranking entirely (not counted for VP)
@@ -246,6 +246,7 @@ task :voting_bot => :environment do |t, args|
     end
     # logger.log "----> #{comments.size} comments returned"
 
+    # duplication checks for each posts
     review_commnet_added = {}
     mod_comment_added = {}
     comments.each do |comment|
@@ -273,15 +274,24 @@ task :voting_bot => :environment do |t, args|
           end
         # 2. Review comments
         elsif is_review
+          total_review_comment_count += 1
+          review_user = User.find_by(username: comment['author'])
+
           if review_commnet_added[comment['author']]
             logger.log "--> REMOVE DUPLICATED_REVIEW_COMMENT: @#{comment['author']}"
           elsif comment['body'].size < 80
             logger.log "--> REMOVE TOO_SHORT_REVIEW_COMMENT: @#{comment['author']}"
-          elsif !votes.any? { |v| v['voter'] == comment['author'] && v['percent'] >= 5000 }
+          elsif !votes.any? { |v| v['voter'] == comment['author'] && v['percent'] >= 3000 }
             logger.log "--> REMOVE NOT_VOTED_REVIEW_COMMENT: @#{comment['author']}"
           elsif comment['author'] == post.author
             logger.log "--> REMOVE SELF_REVIEW_COMMENT: @#{comment['author']}"
-          elsif User.find_by(username: comment['author']).try(:blacklist?)
+          elsif review_user.nil?
+            logger.log "--> REMOVE NOT_A_USER: @#{comment['author']}"
+          elsif !review_user.dau_yesterday?
+            logger.log "--> REMOVE NOT_DAU: @#{comment['author']}"
+          elsif review_user.reputation < 35
+            logger.log "--> REMOVE LOW_REPUTATION: @#{comment['author']}"
+          elsif review_user.try(:blacklist?)
             logger.log "--> REMOVE_BLACKLIST: @#{comment['author']}"
           else
             review_comments.push({ author: comment['author'], permlink: comment['permlink'], should_skip: should_skip })
@@ -296,9 +306,11 @@ task :voting_bot => :environment do |t, args|
   original_post_size = posts.size
   posts = posts.to_a.reject { |post| posts_to_remove.include?(post.id) }
   vp_distribution = natural_distributed_array(posts.size)
+  total_reward = posts.reduce(0) { |s, p| s + p.payout_value }
 
-  logger.log "\n==========\n Total #{original_post_size} posts -> #{posts.size} accepted\n"
-  logger.log "Total #{review_comments.size} review comments\n"
+  logger.log "\n==========\nTotal #{original_post_size} posts -> #{posts.size} accepted\n"
+  logger.log "Total reward (active): $#{total_reward.round(2)} SBD -> \n"
+  logger.log "Total #{total_review_comment_count} review comments -> #{review_comments.size} qualified\n"
   logger.log "Voting start with\n - #{POWER_TOTAL_POST.round(2)}% VP on Posts\n - #{POWER_TOTAL_COMMENT.round(2)}% VP on Posts\n==========", true
 
   posts.each_with_index do |post, i|

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_06_15_001850) do
+ActiveRecord::Schema.define(version: 2018_06_22_153957) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -48,6 +48,7 @@ ActiveRecord::Schema.define(version: 2018_06_15_001850) do
     t.boolean "is_verified", default: false
     t.string "verified_by"
     t.float "hunt_score", default: 0.0
+    t.json "valid_votes", default: []
     t.index "((((to_tsvector('english'::regconfig, (author)::text) || to_tsvector('english'::regconfig, (title)::text)) || to_tsvector('english'::regconfig, (tagline)::text)) || to_tsvector('english'::regconfig, immutable_array_to_string(tags, ' '::text))))", name: "index_posts_full_text", using: :gin
     t.index ["author", "permlink"], name: "index_posts_on_author_and_permlink", unique: true
     t.index ["created_at"], name: "index_posts_on_created_at"
@@ -66,6 +67,9 @@ ActiveRecord::Schema.define(version: 2018_06_15_001850) do
     t.datetime "last_logged_in_at"
     t.integer "reputation", default: 0
     t.datetime "blacklisted_at"
+    t.float "cached_diversity_score", default: -1.0
+    t.datetime "diversity_score_updated_at"
+    t.float "vesting_shares", default: -1.0
     t.index ["encrypted_token", "reputation"], name: "index_users_on_encrypted_token_and_reputation"
     t.index ["last_logged_in_at"], name: "index_users_on_last_logged_in_at"
     t.index ["username"], name: "index_users_on_username", unique: true

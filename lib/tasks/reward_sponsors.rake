@@ -16,7 +16,7 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
 
   begin
     # REF: https://helloacm.com/tools/steemit/delegators/
-    uri = URI('https://happyukgo.com/api/steemit/delegators/?id=steemhunt&hash=1f849cf2679ea83eb43d94f066c0d4eb')
+    uri = URI('https://uploadbeta.com/api/steemit/delegators/?id=steemhunt&hash=64266499d925926f0fd9d500c4f109eb')
     response = Net::HTTP.get(uri)
     json = JSON.parse(response)
   rescue => e
@@ -35,7 +35,7 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
     end
   end
 
-  logger.log "\n==========\nTotal: #{formatted_number(total_vests)} VESTS (#{formatted_number(total_sps.round)} SP) / #{formatted_number(total_opt_out_vests)} VESTS OPETED OUT\n==========", true
+  logger.log "\n==========\nTotal: #{formatted_number(total_vests)} VESTS (#{formatted_number(total_sps.round)} SP) / #{formatted_number(total_opt_out_vests)} VESTS OPTED OUT\n==========", true
 
   logger.log "|  User Name  |   Delegated   | STEEM Rewards | HUNT Tokens Reserved | HUNT Tokens Total |"
   logger.log "|-------------|---------------|---------------|----------------------|-------------------|"
@@ -43,7 +43,6 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
   total_steem_distributed = 0.0
   total_hunt_distributed = 0.0
   total_proportion = 0.0
-  total_hunt_accumulated = 0.0
   steem_transactions = []
   ActiveRecord::Base.transaction do # transaction
     json.each do |j|
@@ -67,24 +66,23 @@ task :reward_sponsors, [:week, :steem_to_distribute, :write]=> :environment do |
               type: :transfer,
               from: 'steemhunt.pay',
               to: j['delegator'],
-              amount: "#{steem.round(3)} STEEM",
+              amount: "#{sprintf("%.3f", steem)} STEEM",
               memo: 'Steemhunt weekly reward from the sponsor program'
             }
           end
         end
 
         hunt_balance = User.find_by(username: j['delegator']).try(:hunt_balance).to_f
-        total_hunt_accumulated += hunt_balance
       end
 
       logger.log "| @#{j['delegator']} | #{formatted_number(j['vests'], 0)} VESTS (#{formatted_number(j['sp'].round, 0)} SP) | " +
-        "#{formatted_number(steem, 3)} | #{formatted_number(hunt, 0)} | #{formatted_number(hunt +hunt_balance, 0)} |"
+        "#{formatted_number(steem, 3)} | #{formatted_number(hunt, 0)} | #{formatted_number(hunt_balance, 0)} |"
     end
   end
 
   logger.log "| Total | #{formatted_number(total_vests)} VESTS (#{formatted_number(total_sps.round)} SP) | " +
         "#{(total_proportion * 100).round(2)}% | #{formatted_number(total_steem_distributed, 3)} | " +
-        "#{formatted_number(total_hunt_distributed, 0)} | #{formatted_number(total_hunt_distributed + total_hunt_accumulated, 0)} |"
+        "#{formatted_number(total_hunt_distributed, 0)}"
 
   logger.log "\n==========\nSEND #{formatted_number(total_steem_distributed)} STEEM TO #{steem_transactions.size} SPONSORS (#{json.size - steem_transactions.size} omitted less than 0.001)\n==========", true
 

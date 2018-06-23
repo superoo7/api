@@ -22,7 +22,7 @@ class PostsController < ApplicationController
       @posts = @posts.where(is_active: true).order(@sort)
     end
 
-    render json: @posts
+    render json: @posts.as_json(except: [:active_votes])
   end
 
   def top
@@ -47,7 +47,7 @@ class PostsController < ApplicationController
     render json: { posts: [] } and return if query.blank?
 
     terms = query.split
-    no_space = query.gsub(' ', '')
+    no_space = query.gsub(/[\s\t]/, '')
 
     @posts = Post.from("""
       (SELECT *,
@@ -66,7 +66,7 @@ class PostsController < ApplicationController
 
   # GET /posts/@:author
   def author
-    @posts = Post.where(author: params[:author], is_active: true).order(@sort)
+    @posts = Post.where(author: params[:author]).order(@sort)
 
     render_pages
   end
@@ -150,7 +150,7 @@ class PostsController < ApplicationController
   # PATCH /posts/refresh/@:author/:permlink
   def refresh
     if @post.update(post_refresh_params)
-      render json: @post.as_json(only: [:hunt_score])
+      render json: @post.as_json(only: [:hunt_score, :valid_votes])
     else
       render json: { error: 'UNPROCESSABLE_ENTITY' }, status: :unprocessable_entity
     end
@@ -171,7 +171,7 @@ class PostsController < ApplicationController
 
   # PATCH /moderate/@:author/:permlink
   def moderate
-    if @post.verified_by != @current_user.username && !@current_user.admin?
+    if @post.verified_by != @current_user.username && !@current_user.admin? && !@current_user.guardian?
       render json: { error: "This product is in review by #{@post.verified_by}" }, status: :forbidden
     elsif @post.update!(post_moderate_params.merge(verified_by: @current_user.username))
       render_moderator_fields
@@ -248,7 +248,7 @@ class PostsController < ApplicationController
       path = parsed.path == '/' ? '' : parsed.path
 
       # Google Playstore apps use parameters for different products
-      return uri if host == 'play.google.com' && path == '/store/apps/details'
+      return "#{uri}%" if host == 'play.google.com' && path == '/store/apps/details'
 
       "http%://%#{host}#{path}%" # NOTE: Cannot use index scan
     end
