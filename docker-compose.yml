@@ -10,7 +10,7 @@ services:
   web:
     build: .
     ports:
-      - 3000:3000
+      - 3001:3001
     volumes:
       - .:/app
       - bundle:/usr/local/bundle
@@ -23,11 +23,9 @@ services:
     tty: true
     command: ./bin/start.sh
     environment: &app_env
-      PORT: 3000
       DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: steemhunt
-      DB_NAME: steemhunt
+      PORT: 3001
+      RAILS_ENV: docker
   db:
     image: postgres:latest
     ports:
@@ -37,27 +35,3 @@ services:
     environment:
       POSTGRES_USER: steemhunt
       POSTGRES_DB: steemhunt
-
-
-# version: '3'
-# services:
-#   db:
-#     image: postgres
-#     volumes:
-#       - ./tmp/db:/var/lib/postgresql/data
-#     environment:
-#       - POSTGRES_USER:'steemhunt'
-#     ports:
-#       - "5432:5432"
-#   web:
-#     build: .
-#     command: "bundle exec rails db:create"
-#     # command: bash -c "bundle exec rails db:drop db:create db:migrate db:seed && bundle exec rails start"
-#     volumes:
-#       - .:/steemhunt
-#     ports:
-#       - "3000:3000"
-#     depends_on:
-#       - db
-#     links:
-#       - db

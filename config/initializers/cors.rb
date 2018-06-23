@@ -5,7 +5,7 @@
 
 # Read more: https://github.com/cyu/rack-cors
 
-if Rails.env.development?
+if Rails.env.development? || Rails.env.docker?
   Rails.application.config.middleware.insert_before 0, Rack::Cors do
     allow do
       origins '*'

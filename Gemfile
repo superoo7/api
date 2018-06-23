@@ -23,12 +23,12 @@ gem 'radiator'
 gem 'will_paginate'
 gem 'bugsnag'
 
-group :development, :test do
+group :development, :test, :docker do
   # Call 'pry' anywhere in the code to stop execution and get a debugger console
   gem 'pry'
 end
 
-group :development do
+group :development, :docker do
   gem 'listen', '>= 3.0.5', '< 3.2'
   # Spring speeds up development by keeping your application running in the background
   # gem 'spring'
