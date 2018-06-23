@@ -53,3 +53,25 @@ You can start both api and web server by running
 ```
 bundle exec rails start
 ```
+
+### Docker version
+
+### Requirement
+
+- Docker setup
+
+
+### Installation
+
+Run following codes
+
+```bash
+> docker-compose build
+> docker-compose up
+```
+
+Then a server is up on `http://localhost:3001`
+
+### To make changes
+
+Make changes in `bin/start.sh` in order to choose whether to reset the database and seed, then, run `docker-compose build && docker-compose up`
