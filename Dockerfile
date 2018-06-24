@@ -7,3 +7,4 @@ COPY ./Gemfile /steemhunt/Gemfile
 COPY ./Gemfile.lock /steemhunt/Gemfile.lock
 RUN bundle install
 COPY . /steemhunt
+EXPOSE 3001

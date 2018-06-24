@@ -1,15 +1,11 @@
 default: &default
-  host: localhost
+  host: <%= ENV["DB_HOST"] || 'localhost' %>
   adapter: postgresql
   encoding: utf8
   pool: 5
   timeout: 10000
   database: steemhunt
   username: steemhunt
-
-docker:
- <<: *default
- host: <%= ENV['DB_HOST'] %>
 
 development:
   <<: *default

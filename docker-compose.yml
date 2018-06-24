@@ -25,7 +25,6 @@ services:
     environment: &app_env
       DB_HOST: db
       PORT: 3001
-      RAILS_ENV: docker
   db:
     image: postgres:latest
     ports:
